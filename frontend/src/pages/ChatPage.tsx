@@ -110,6 +110,7 @@ const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
+  const [currentOfferData, setCurrentOfferData] = useState<Offer | null>(null);
 
   // Fetch conversation details
   useEffect(() => {
@@ -157,6 +158,35 @@ const ChatPage: React.FC = () => {
     };
     fetchOfferId();
   }, [conversation, accessToken, fetchNegotiation, fetchNegotiationHistory]);
+
+  // Fetch latest offer data when offerId changes
+  useEffect(() => {
+    fetchLatestOfferData();
+  }, [offerId, accessToken]);
+
+  // Refetch offer data when negotiation state changes (to get updated status)
+  useEffect(() => {
+    if (offerId && negotiationState[offerId || '']) {
+      fetchLatestOfferData();
+    }
+  }, [offerId, negotiationState[offerId || '']?.canAcceptOffer]);
+
+  // Fetch latest offer data
+  const fetchLatestOfferData = async () => {
+    if (offerId && accessToken) {
+      try {
+        const res = await fetch(`/api/offers/${offerId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          setCurrentOfferData(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching latest offer data:', error);
+      }
+    }
+  };
 
   // Fetch offer details if not present
   useEffect(() => {
@@ -710,7 +740,7 @@ const ChatPage: React.FC = () => {
     { label: 'المحادثة', active: true }
   ];
 
-  const currentOffer = offers.find(o => o.id === offerId);
+  const currentOffer = currentOfferData || offers.find(o => o.id === offerId);
 
   // Status Bar Component
   const StatusBar = () => {
@@ -751,7 +781,18 @@ const ChatPage: React.FC = () => {
   };
 
   // Action Buttons Component
-  const ActionButtons = () => (
+  const ActionButtons = () => {
+    // Debug logging
+    console.log('ActionButtons Debug:', {
+      isSeeker,
+      offerId,
+      negotiationState: negotiationState[offerId || ''],
+      canAcceptOffer: negotiationState[offerId || '']?.canAcceptOffer,
+      paymentCompleted,
+      currentOfferStatus: currentOffer?.status
+    });
+    
+    return (
     <div className="flex flex-col md:flex-row gap-4 p-4 flex-wrap">
       {!(currentOffer?.status === 'cancelled' || currentOffer?.status === 'cancellation_requested' || currentOffer?.status === 'completed') && (
         <>
@@ -808,7 +849,8 @@ const ChatPage: React.FC = () => {
         {showNegotiationMobile ? 'إخفاء التفاوض' : 'عرض التفاوض'}
       </Button>
     </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
