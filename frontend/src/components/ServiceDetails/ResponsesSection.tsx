@@ -11,7 +11,7 @@ interface Response {
   name: string;
   avatar: string;
   rating: number;
-  price: number;
+  price?: number;
   specialties: string[];
   verified?: boolean;
   completedJobs?: number;
@@ -90,7 +90,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
     name: resp.name || 'مستخدم غير معروف',
     avatar: resp.avatar || '',
     rating: resp.rating || 0,
-    price: resp.price || 0,
+    price: resp.price,
     specialties: resp.specialties || [],
     message: resp.message || '',
     estimatedTimeDays: resp.estimatedTimeDays || 1,
@@ -332,20 +332,22 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                 </div>
               </div>
 
-              {/* Emphasized Price Section */}
-              <div className="mb-4 p-4 bg-gradient-to-r from-deep-teal/5 to-teal-500/5 rounded-lg border border-deep-teal/20">
-                <div className="text-center">
-                  <div className="text-sm text-deep-teal mb-1">السعر المقترح</div>
-                  <div className="text-2xl font-bold text-deep-teal">
-                    {resp.price.toLocaleString('ar-EG')} جنيه
-                  </div>
-                  {resp.estimatedTimeDays && (
-                    <div className="text-xs text-deep-teal/70 mt-1">
-                      المدة المتوقعة: {resp.estimatedTimeDays} يوم
+              {/* Emphasized Price Section - Only show if price exists */}
+              {resp.price && (
+                <div className="mb-4 p-4 bg-gradient-to-r from-deep-teal/5 to-teal-500/5 rounded-lg border border-deep-teal/20">
+                  <div className="text-center">
+                    <div className="text-sm text-deep-teal mb-1">السعر المقترح</div>
+                    <div className="text-2xl font-bold text-deep-teal">
+                      {resp.price.toLocaleString('ar-EG')} جنيه
                     </div>
-                  )}
+                    {resp.estimatedTimeDays && (
+                      <div className="text-xs text-deep-teal/70 mt-1">
+                        المدة المتوقعة: {resp.estimatedTimeDays} يوم
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Specialties */}
               {resp.specialties.length > 0 && (

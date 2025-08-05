@@ -14,7 +14,6 @@ import Header from './Header';
 import Footer from './Footer';
 
 interface FormData {
-  price: string;
   timeline: string;
   duration: string;
   message: string;
@@ -42,7 +41,6 @@ interface Offer {
   name: string;
   avatar: string;
   rating: number;
-  price: number;
   specialties: string[];
   verified?: boolean;
   message?: string;
@@ -59,7 +57,6 @@ const ServiceResponseForm: React.FC = () => {
   const { addNewOffer } = useOfferContext();
   
   const [formData, setFormData] = useState<FormData>({
-    price: '',
     timeline: '',
     duration: '',
     message: '',
@@ -145,47 +142,14 @@ const ServiceResponseForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Budget validation - only if budget is available
-    const priceValue = Number(formData.price);
-    const minBudget = jobRequest?.budget?.min;
-    const maxBudget = jobRequest?.budget?.max;
-    
-    // Only validate against budget if it's available
-    if (minBudget !== undefined && maxBudget !== undefined) {
-      // Calculate thresholds for edge cases
-      const tooLowThreshold = minBudget * 0.5; // 50% of min budget
-      const tooHighThreshold = maxBudget * 2; // 200% of max budget
-      
-      const isOverBudget = priceValue > maxBudget;
-      const isTooLow = priceValue < tooLowThreshold;
-      const isTooHigh = priceValue > tooHighThreshold;
-      
-      if ((isOverBudget || isTooLow || isTooHigh) && !formData.negotiationAcknowledged) {
-        if (isTooLow) {
-          setError('يجب عليك الموافقة على المتابعة بهذا السعر المنخفض جداً');
-        } else if (isTooHigh) {
-          setError('يجب عليك الموافقة على المتابعة بهذا السعر المرتفع جداً');
-        } else {
-          setError('يجب عليك الموافقة على أن سعرك يتطلب تفاوض للمتابعة');
-        }
-        return;
-      }
-    }
-    
     setIsSubmitting(true);
     
     try {
       const offerData = {
-        budget: {
-          min: Number(formData.price),
-          max: Number(formData.price),
-          currency: 'EGP'
-        },
         message: formData.message,
         estimatedTimeDays: Number(formData.duration) || 1,
         availableDates: formData.availableDates.map(date => date.toISOString()),
-        timePreferences: formData.timePreferences,
-        budgetExplanation: formData.budgetExplanation || undefined
+        timePreferences: formData.timePreferences
       };
 
       const res = await fetch(`/api/requests/${jobRequestId}/offers`, {
@@ -206,7 +170,6 @@ const ServiceResponseForm: React.FC = () => {
         name: providerData ? `${providerData.name.first} ${providerData.name.last}` : 'مستخدم',
         avatar: providerData?.avatarUrl || '',
         rating: providerData?.providerProfile?.rating || 0,
-        price: parseFloat(formData.price),
         specialties: [], // TODO: Get from provider profile
         verified: providerData?.providerProfile?.verification?.status === 'verified',
         message: formData.message,
@@ -228,9 +191,7 @@ const ServiceResponseForm: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: string) => {
-    return price ? `${price} جنيه` : '0 جنيه';
-  };
+
 
   const getTimelineDisplay = () => {
     switch (formData.timeline) {
@@ -272,40 +233,67 @@ const ServiceResponseForm: React.FC = () => {
               <h2 className="text-xl font-bold text-deep-teal mb-4 pb-2 border-b border-gray-200">
                 تفاصيل طلب الخدمة
               </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold text-lg text-deep-teal mb-2">{jobRequest.title}</h3>
-                  <p className="text-text-secondary text-sm mb-4">{jobRequest.description}</p>
-                  {jobRequest.category && (
-                    <div className="mb-2">
-                      <span className="text-sm font-medium text-deep-teal">الفئة: </span>
-                      <span className="text-sm bg-soft-teal/20 text-deep-teal px-2 py-1 rounded-full">
-                        {jobRequest.category}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    {jobRequest.budget && (
-                      <div>
-                        <div className="text-lg font-bold text-bright-orange">
-                          {jobRequest.budget.min} - {jobRequest.budget.max} جنيه
-                        </div>
-                        <div className="text-xs text-text-secondary">الميزانية المتوقعة</div>
-                      </div>
-                    )}
-                    {jobRequest.deadline && (
-                      <div>
-                        <div className="text-sm font-bold text-blue-600">
-                          {new Date(jobRequest.deadline).toLocaleDateString('ar-EG')}
-                        </div>
-                        <div className="text-xs text-text-secondary">الموعد النهائي</div>
-                      </div>
-                    )}
+              
+              {/* Header Section - Title and Category */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-2 mb-2">
+                    <h3 className="text-xl font-bold text-deep-teal leading-tight flex-1">
+                      {jobRequest.title}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-base text-text-secondary">
+                    <span className="bg-soft-teal/20 text-deep-teal px-2 py-1 rounded-md text-sm font-medium">
+                      {jobRequest.category || 'عام'}
+                    </span>
+                    <span className="text-sm">•</span>
+                    <span className="text-sm">
+                      {new Date().toLocaleDateString('ar-EG', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
                   </div>
                 </div>
               </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 gap-2 mb-4 text-center">
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-sm font-bold text-blue-600">
+                    0
+                  </div>
+                  <div className="text-xs text-text-secondary">عرض</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="text-sm font-bold text-orange-600 flex items-center justify-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {jobRequest.deadline ? new Date(jobRequest.deadline).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : 'مفتوح'}
+                  </div>
+                  <div className="text-xs text-text-secondary">موعد</div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-4">
+                <p className="text-base text-text-primary leading-relaxed">
+                  {jobRequest.description || 'لا يوجد وصف متاح لهذا الطلب.'}
+                </p>
+              </div>
+
+              {/* Budget - Only show if available */}
+              {jobRequest.budget && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-bright-orange">
+                      {jobRequest.budget.min} - {jobRequest.budget.max} جنيه
+                    </div>
+                    <div className="text-xs text-text-secondary">الميزانية المتوقعة</div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -338,51 +326,6 @@ const ServiceResponseForm: React.FC = () => {
                 </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="price" className="text-sm font-medium text-text-primary mb-2 block">
-                    سعرك
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
-                      جنيه
-                    </span>
-                    <FormInput
-                      id="price"
-                      type="number"
-                      placeholder="أدخل سعرك"
-                      value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                      className="w-full pr-12 pl-3 h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-teal focus:border-deep-teal bg-white text-text-primary placeholder-gray-500"
-                      required
-                    />
-                  </div>
-                  
-                  {/* Budget Helper Components */}
-                  {jobRequest?.budget && (
-                    <>
-                      <BudgetIndicator
-                        price={formData.price}
-                        minBudget={jobRequest.budget.min}
-                        maxBudget={jobRequest.budget.max}
-                      />
-                      <NegotiationToggle
-                        isChecked={formData.negotiationAcknowledged}
-                        onChange={(checked) => setFormData(prev => ({ ...prev, negotiationAcknowledged: checked }))}
-                        price={formData.price}
-                        maxBudget={jobRequest.budget.max}
-                        minBudget={jobRequest.budget.min}
-                      />
-                      <BudgetExplanationTextarea
-                        value={formData.budgetExplanation}
-                        onChange={(value) => setFormData(prev => ({ ...prev, budgetExplanation: value }))}
-                        price={formData.price}
-                        maxBudget={jobRequest.budget.max}
-                        isNegotiationAcknowledged={formData.negotiationAcknowledged}
-                      />
-                    </>
-                  )}
-                </div>
-                
-                <div>
                   <label htmlFor="timeline" className="text-sm font-medium text-text-primary mb-2 block">
                     متى يمكنك البدء؟
                   </label>
@@ -402,22 +345,22 @@ const ServiceResponseForm: React.FC = () => {
                     aria-label="اختر التوقيت"
                   />
                 </div>
-              </div>
-              
-              <div className="mt-6">
-                <label htmlFor="duration" className="text-sm font-medium text-text-primary mb-2 block">
-                  المدة المتوقعة (أيام)
-                </label>
-                <FormInput
-                  id="duration"
-                  type="number"
-                  placeholder="مثال: 2 يوم"
-                  value={formData.duration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                  className="w-full h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-teal focus:border-deep-teal bg-white text-text-primary placeholder-gray-500"
-                  min="1"
-                  required
-                />
+                
+                <div>
+                  <label htmlFor="duration" className="text-sm font-medium text-text-primary mb-2 block">
+                    المدة المتوقعة (أيام)
+                  </label>
+                  <FormInput
+                    id="duration"
+                    type="number"
+                    placeholder="مثال: 2 يوم"
+                    value={formData.duration}
+                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-teal focus:border-deep-teal bg-white text-text-primary placeholder-gray-500"
+                    min="1"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
@@ -603,13 +546,6 @@ const ServiceResponseForm: React.FC = () => {
               </div>
               
               <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-text-secondary">السعر</p>
-                  <p className="text-2xl font-bold text-deep-teal">
-                    {formatPrice(formData.price)}
-                  </p>
-                </div>
-                
                 <div>
                   <p className="text-sm font-semibold text-text-secondary">تاريخ البدء</p>
                   <p className="text-text-primary">{getTimelineDisplay()}</p>

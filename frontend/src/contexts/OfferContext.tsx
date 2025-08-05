@@ -7,7 +7,7 @@ export interface Offer {
   name: string;
   avatar: string;
   rating: number;
-  price: number;
+  price?: number;
   specialties: string[];
   verified?: boolean;
   message?: string;

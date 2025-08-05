@@ -37,8 +37,8 @@ class OfferService {
         throw new Error('Provider already made an offer on this job');
       }
       
-      // Validate price is within budget - only if job request has budget
-      if (jobRequest.budget && jobRequest.budget.min && jobRequest.budget.max) {
+      // Validate price is within budget - only if both job request and offer have budget
+      if (jobRequest.budget && jobRequest.budget.min && jobRequest.budget.max && offerData.budget) {
         if (offerData.budget.min < jobRequest.budget.min || 
             offerData.budget.max > jobRequest.budget.max) {
           throw new Error('Price must be within the job request budget range');
@@ -48,7 +48,7 @@ class OfferService {
       const offer = new Offer({
         jobRequest: jobRequestId,
         provider: providerId,
-        budget: offerData.budget,
+        budget: offerData.budget || undefined,
         message: offerData.message,
         estimatedTimeDays: offerData.estimatedTimeDays,
         availableDates: offerData.availableDates || [],

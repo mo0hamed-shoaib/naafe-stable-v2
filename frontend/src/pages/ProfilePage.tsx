@@ -8,9 +8,7 @@ import FormInput from '../components/ui/FormInput';
 import Badge from '../components/ui/Badge';
 import { CheckCircle, CreditCard, FileText, Camera, Upload, Trash2 } from 'lucide-react';
 import UnifiedSelect from '../components/ui/UnifiedSelect';
-import { TimePicker, ConfigProvider } from 'antd';
-import dayjs from 'dayjs';
-import arEG from 'antd/locale/ar_EG';
+
 import { Pencil } from 'lucide-react';
 
 const fetchWithAuth = async (url: string, token: string) => {
@@ -21,16 +19,8 @@ const fetchWithAuth = async (url: string, token: string) => {
   return res.json();
 };
 
-const TABS = [
-  { key: 'offered', label: 'الخدمات' },
-  { key: 'requested', label: 'الخدمات المطلوبة' },
-  { key: 'saved', label: 'الخدمات المحفوظة' },
-  { key: 'reviews', label: 'التقييمات والمراجعات' },
-  { key: 'portfolio', label: 'الأعمال/المعرض' },
-];
-
 const PROVIDER_TABS = [
-  { key: 'offered', label: 'الخدمات' },
+  { key: 'offered', label: 'الخدمات المقدمة' },
   { key: 'hire-requests', label: 'طلبات التوظيف' },
   { key: 'saved', label: 'الخدمات المحفوظة' },
   { key: 'reviews', label: 'التقييمات والمراجعات' },
@@ -56,9 +46,6 @@ interface Service {
   price?: number;
   category?: string;
   budget?: { min: number; max: number }; // Added budget to Service interface
-  workingDays?: string[]; // Added workingDays to Service interface
-  startTime?: string; // Added startTime to Service interface
-  endTime?: string; // Added endTime to Service interface
 }
 interface Review {
   id: string;
@@ -91,9 +78,6 @@ interface Profile {
     verification: { status: string; method: string | null; documents: string[] };
     skills?: string[]; // Added skills to the interface
     location?: { city: string; government: string }; // Added location to the interface
-    workingDays?: string[]; // Added workingDays to the interface
-    startTime?: string; // Added startTime to the interface
-    endTime?: string; // Added endTime to the interface
   };
   isActive: boolean;
   isBlocked: boolean;
@@ -174,16 +158,7 @@ const ProfilePage: React.FC = () => {
   // Add state for toggling skills edit modal/section
   const [editingSkills, setEditingSkills] = useState(false);
   const [showAllSkills, setShowAllSkills] = useState(false);
-  const [editingAvailability, setEditingAvailability] = useState(false);
-  const [availabilityDays, setAvailabilityDays] = useState<string[]>(profile?.providerProfile?.workingDays || []);
-  const [availabilityTime, setAvailabilityTime] = useState<[string, string] | null>(
-    profile?.providerProfile?.startTime && profile?.providerProfile?.endTime
-      ? [profile.providerProfile.startTime, profile.providerProfile.endTime]
-      : null
-  );
-  const [availabilityLoading, setAvailabilityLoading] = useState(false);
-  const [availabilitySuccess, setAvailabilitySuccess] = useState('');
-  const [availabilityError, setAvailabilityError] = useState('');
+
 
   // Store fetchAll in a ref to avoid using 'any' on window
   const fetchAllRef = React.useRef<() => void>();
@@ -208,12 +183,13 @@ const ProfilePage: React.FC = () => {
         const realProfileId = profileRes.data.user._id;
         if (profileRes.data.user.roles?.includes('provider')) {
           try {
-            const listingsUrl = isSelf ? '/api/listings/users/me/listings' : `/api/users/${realProfileId}/listings`;
-            const servicesRes = await fetchWithAuth(listingsUrl, token);
-            // Map _id to id for each listing
-            setServices((servicesRes.data.listings || []).map((s: Service) => ({ ...s, id: (s as unknown as { _id: string })._id })));
+            // For providers, fetch services they've sent offers to
+            const offersUrl = isSelf ? '/api/offers/users/me/services' : `/api/users/${realProfileId}/offers/services`;
+            const servicesRes = await fetchWithAuth(offersUrl, token);
+            // Map _id to id for each service
+            setServices((servicesRes.data.services || []).map((s: Service) => ({ ...s, id: (s as unknown as { _id: string })._id })));
           } catch (error) {
-            console.warn('Could not fetch provider listings:', error);
+            console.warn('Could not fetch provider offered services:', error);
             setServices([]);
           }
         } else {
@@ -428,14 +404,7 @@ const ProfilePage: React.FC = () => {
   };
 
   // Helper for 12-hour Arabic time format
-  function formatTimeArabic12hr(time: string) {
-    if (!time) return '';
-    const [h, m] = time.split(':').map(Number);
-    if (isNaN(h) || isNaN(m)) return time;
-    const hour12 = ((h % 12) || 12);
-    const ampm = h < 12 ? 'ص' : 'م';
-    return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
-  }
+
 
   return (
     <PageLayout
@@ -531,8 +500,8 @@ const ProfilePage: React.FC = () => {
               {profile?.lastLoginAt && (
                 <div className="text-text-secondary text-sm">آخر تواجد: {new Date(profile.lastLoginAt).toLocaleString('ar-EG')}</div>
               )}
-              {/* Skills - Improved visibility */}
-              {profile?.providerProfile && (
+              {/* Skills - Only for providers */}
+              {profile?.roles.includes('provider') && profile?.providerProfile && (
                 <div className="flex flex-wrap gap-2 mt-2 items-center">
                   {editingSkills ? (
                     <>
@@ -613,171 +582,11 @@ const ProfilePage: React.FC = () => {
                   <span>تم رفض الترقية</span>
                 </Badge>
               )}
-              {/* Availability Section (for providers) */}
-              {profile?.roles.includes('provider') && (
-                <div className="mt-2 w-full">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-[#2D5D4F] text-base">مواعيد التوفر:</span>
-                    {isSelf && !editingAvailability && (
-                      <button
-                        className="text-accent hover:text-deep-teal transition p-1 rounded flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-accent"
-                        onClick={() => {
-                          setEditingAvailability(true);
-                          setAvailabilityDays(profile?.providerProfile?.workingDays || []);
-                          setAvailabilityTime(
-                            profile?.providerProfile?.startTime && profile?.providerProfile?.endTime
-                              ? [profile.providerProfile.startTime, profile.providerProfile.endTime]
-                              : null
-                          );
-                        }}
-                        title="تعديل مواعيد التوفر"
-                      >
-                        <Pencil className="w-4 h-4" /> <span>تعديل</span>
-                      </button>
-              )}
-          </div>
-                  {!editingAvailability ? (
-                    <div className="text-base text-[#50958A] font-bold">
-                      {profile?.providerProfile?.workingDays && profile.providerProfile.workingDays.length > 0 ? (
-                        <>
-                          {profile.providerProfile.workingDays.map((day: string, idx: number) => (
-                            <span key={day}>{idx > 0 ? '، ' : ''}{
-                              {
-                                saturday: 'السبت',
-                                sunday: 'الأحد',
-                                monday: 'الاثنين',
-                                tuesday: 'الثلاثاء',
-                                wednesday: 'الأربعاء',
-                                thursday: 'الخميس',
-                                friday: 'الجمعة'
-                              }[day] || day
-                            }</span>
-                          ))}
-                          {profile.providerProfile.startTime && profile.providerProfile.endTime && (
-                            <span> (
-                              {formatTimeArabic12hr(profile.providerProfile.startTime)} - {formatTimeArabic12hr(profile.providerProfile.endTime)}
-                            )</span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-[#F5A623]">لم يتم تحديد مواعيد التوفر بعد</span>
-                      )}
-            </div>
-                  ) : (
-                    <form
-                      className="flex flex-col gap-4 mt-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        setAvailabilityLoading(true);
-                        setAvailabilitySuccess('');
-                        setAvailabilityError('');
-                        try {
-                          const res = await fetch('/api/users/me/availability', {
-                            method: 'PATCH',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${accessToken}`
-                            },
-                            body: JSON.stringify({
-                              workingDays: availabilityDays,
-                              startTime: availabilityTime ? availabilityTime[0] : '',
-                              endTime: availabilityTime ? availabilityTime[1] : ''
-                            })
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            setAvailabilitySuccess('تم تحديث مواعيد التوفر بنجاح');
-                            setEditingAvailability(false);
-                            // Refresh profile data after save
-                            if (fetchAllRef.current) fetchAllRef.current();
-                          } else {
-                            setAvailabilityError(data.error?.message || 'حدث خطأ أثناء التحديث');
-                          }
-                        } catch {
-                          setAvailabilityError('حدث خطأ أثناء التحديث');
-                        } finally {
-                          setAvailabilityLoading(false);
-                        }
-                      }}
-                    >
-                      {/* Day Selector (reuse from PostServiceForm) */}
-                      <div className="flex flex-row flex-wrap gap-2 md:gap-3">
-                        {[{ value: 'saturday', label: 'السبت' }, { value: 'sunday', label: 'الأحد' }, { value: 'monday', label: 'الاثنين' }, { value: 'tuesday', label: 'الثلاثاء' }, { value: 'wednesday', label: 'الأربعاء' }, { value: 'thursday', label: 'الخميس' }, { value: 'friday', label: 'الجمعة' }].map(day => (
-                          <label
-                            key={day.value}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors cursor-pointer select-none
-                              ${availabilityDays.includes(day.value)
-                                ? 'bg-deep-teal/90 border-deep-teal text-white'
-                                : 'bg-white border-gray-300 text-deep-teal hover:bg-deep-teal/10'}
-                              text-base font-semibold`}
-                            style={{ minWidth: '90px' }}
-                          >
-                            <input
-                              type="checkbox"
-                              className="w-5 h-5 accent-[#2D5D4F] border-2 border-gray-400 rounded focus:ring-2 focus:ring-accent focus:ring-offset-2"
-                              style={{ accentColor: availabilityDays.includes(day.value) ? '#fff' : '#2D5D4F' }}
-                              checked={availabilityDays.includes(day.value)}
-                              onChange={e => {
-                                setAvailabilityDays(prev =>
-                                  e.target.checked
-                                    ? [...prev, day.value]
-                                    : prev.filter(d => d !== day.value)
-                                );
-                              }}
-                            />
-                            <span className="ml-1">{day.label}</span>
-                          </label>
-                  ))}
-                </div>
-                      {/* Time Range Picker (reuse from PostServiceForm) */}
-                      <div className="w-full max-w-xs mt-2">
-                        <ConfigProvider locale={arEG}>
-                          <TimePicker.RangePicker
-                            format={value => {
-                              if (!value) return '';
-                              const hour = value.hour();
-                              const minute = value.minute().toString().padStart(2, '0');
-                              const isAM = hour < 12;
-                              let displayHour = hour % 12;
-                              if (displayHour === 0) displayHour = 12;
-                              return `${displayHour}:${minute} ${isAM ? 'ص' : 'م'}`;
-                            }}
-                            use12Hours
-                            showSecond={false}
-                            value={availabilityTime && availabilityTime.length === 2 ? [dayjs(availabilityTime[0], 'HH:mm'), dayjs(availabilityTime[1], 'HH:mm')] : null}
-                            onChange={val => {
-                              setAvailabilityTime(val && val.length === 2 && val[0] && val[1]
-                                ? [val[0].format('HH:mm'), val[1].format('HH:mm')]
-                                : null);
-                            }}
-                            allowClear
-                            minuteStep={5}
-                            size="large"
-                            className="bg-white border-2 border-gray-300 rounded-lg py-2 pr-3 pl-3 focus:ring-2 focus:ring-accent focus:border-accent text-right text-black custom-timepicker-contrast"
-                            classNames={{ popup: { root: 'rtl' } }}
-                            style={{ direction: 'rtl' }}
-                            placeholder={["من", "إلى"]}
-                          />
-                        </ConfigProvider>
-                </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button type="submit" variant="primary" loading={availabilityLoading} disabled={availabilityLoading}>
-                          حفظ
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => setEditingAvailability(false)} disabled={availabilityLoading}>
-                          إلغاء
-                        </Button>
-                      </div>
-                      {availabilitySuccess && <div className="text-green-600 mt-2">{availabilitySuccess}</div>}
-                      {availabilityError && <div className="text-red-600 mt-2">{availabilityError}</div>}
-                    </form>
-            )}
-                </div>
-              )}
+
           </div>
           </BaseCard>
         ) : null}
-        {showAllSkills && profile?.providerProfile?.skills && (
+        {showAllSkills && profile?.roles.includes('provider') && profile?.providerProfile?.skills && (
           <BaseCard className="mb-8 p-6 bg-white border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#2D5D4F]">كل المهارات</h2>
@@ -790,21 +599,23 @@ const ProfilePage: React.FC = () => {
             </div>
           </BaseCard>
         )}
-        <div className="w-full mt-8">
-          <div className="flex gap-2 md:gap-4 border-b border-[#E5E7EB] mb-4 rtl flex-row-reverse" role="tablist">
-            {(profile?.roles?.includes('provider') ? PROVIDER_TABS : TABS).map(tab => (
-              <button
-                    key={tab.key}
-                className={`px-4 py-2 font-semibold rounded-t-lg focus:outline-none transition-colors duration-200 ${activeTab === tab.key ? 'bg-[#FDF8F0] text-[#2D5D4F] border-b-2 border-[#2D5D4F]' : 'text-[#50958A] bg-transparent'}`}
-                onClick={() => setActiveTab(tab.key)}
-                    role="tab"
-                  >
-                    {tab.label}
-              </button>
-                ))}
-          </div>
-          <div className="min-h-[200px]" id="profile-tabs-content">
-            {/* الخدمات (offered services) */}
+        {/* Tabs Section - Only for Providers */}
+        {profile?.roles?.includes('provider') && (
+          <div className="w-full mt-8">
+            <div className="flex gap-2 md:gap-4 border-b border-[#E5E7EB] mb-4 rtl flex-row-reverse" role="tablist">
+              {PROVIDER_TABS.map(tab => (
+                <button
+                      key={tab.key}
+                  className={`px-4 py-2 font-semibold rounded-t-lg focus:outline-none transition-colors duration-200 ${activeTab === tab.key ? 'bg-[#FDF8F0] text-[#2D5D4F] border-b-2 border-[#2D5D4F]' : 'text-[#50958A] bg-transparent'}`}
+                  onClick={() => setActiveTab(tab.key)}
+                      role="tab"
+                    >
+                      {tab.label}
+                </button>
+                  ))}
+            </div>
+            <div className="min-h-[200px]" id="profile-tabs-content">
+            {/* الخدمات المقدمة (services with offers) */}
             {activeTab === 'offered' && (
               <div id="tab-panel-offered" role="tabpanel" aria-labelledby="offered">
                 <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
@@ -832,52 +643,14 @@ const ProfilePage: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2 text-sm text-[#50958A]">
-                              {service.createdAt && <span className="bg-gray-50 px-2 py-1 rounded">تاريخ الإضافة: {new Date(service.createdAt).toLocaleDateString('ar-EG')}</span>}
-                              {service.budget && <span className="bg-gray-50 px-2 py-1 rounded">الميزانية: يبدأ من {service.budget.min} جنيه إلى {service.budget.max} جنيه</span>}
-                              {/* Address */}
-                              {profile?.providerProfile?.location && (profile.providerProfile.location.government || profile.providerProfile.location.city) && (
-                                <span className="bg-gray-50 px-2 py-1 rounded">
-                                  العنوان: {[profile.providerProfile.location.government, profile.providerProfile.location.city].filter(Boolean).join('، ') || 'غير محدد'}
-                                </span>
-                              )}
-                              {/* Member since */}
-                              {profile?.createdAt && (
-                                <span className="bg-gray-50 px-2 py-1 rounded">
-                                  عضو منذ: {new Date(profile.createdAt).toLocaleString('ar-EG', { month: 'long', year: 'numeric' })}
-                                </span>
-                              )}
-                              {/* Skills */}
-                              {profile?.providerProfile?.skills && profile.providerProfile.skills.length > 0 && (
-                                <span className="bg-gray-50 px-2 py-1 rounded">
-                                  المهارات: {profile.providerProfile.skills.slice(0, 3).join('، ')}
-                                </span>
-                              )}
+                              {service.createdAt && <span className="bg-gray-50 px-2 py-1 rounded">تاريخ الطلب: {new Date(service.createdAt).toLocaleDateString('ar-EG')}</span>}
+                              {service.budget && <span className="bg-gray-50 px-2 py-1 rounded">الميزانية: {service.budget.min} - {service.budget.max} جنيه</span>}
                             </div>
                           </div>
                           <div className="text-[#0E1B18] text-sm line-clamp-3 flex-1">{service.description}</div>
-                          {service.workingDays && service.workingDays.length > 0 && (
-                            <div className="text-xs text-[#50958A] mt-1">
-                              <span>مواعيد التوفر: </span>
-                              {service.workingDays.map((day: string, idx: number) => (
-                                <span key={day}>{idx > 0 ? '، ' : ''}{
-                                  {
-                                    sunday: 'الأحد',
-                                    monday: 'الاثنين',
-                                    tuesday: 'الثلاثاء',
-                                    wednesday: 'الأربعاء',
-                                    thursday: 'الخميس',
-                                    friday: 'الجمعة',
-                                    saturday: 'السبت'
-                                  }[day] || day
-                                }</span>
-                              ))}
-                              {service.startTime && service.endTime && (
-                                <span> ({service.startTime} - {service.endTime})</span>
-                              )}
-                            </div>
-                          )}
+
                           <div className="flex justify-end mt-auto pt-2">
-                            <Button size="sm" variant="outline" onClick={() => window.location.href = `/services/${service.id}`}>عرض التفاصيل</Button>
+                            <Button size="sm" variant="outline" onClick={() => window.location.href = `/requests/${service.id}`}>عرض التفاصيل</Button>
                           </div>
                         </BaseCard>
                       ))
@@ -889,7 +662,7 @@ const ProfilePage: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="text-[#50958A] text-center w-full py-8">لا توجد خدمات معروضة بعد.</div>
+                  <div className="text-[#50958A] text-center w-full py-8">لم تقم بتقديم عروض على أي خدمات بعد.</div>
                 )}
               </div>
             )}
@@ -1100,6 +873,7 @@ const ProfilePage: React.FC = () => {
             )}
           </div>
         </div>
+        )}
     </div>
     </PageLayout>
   );

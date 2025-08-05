@@ -3,12 +3,15 @@ import { body, param, validationResult } from 'express-validator';
 // Validation rules for creating an offer
 const createOfferValidation = [
   body('budget.min')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Minimum budget must be a positive number'),
   body('budget.max')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Maximum budget must be a positive number'),
   body('budget.currency')
+    .optional()
     .isIn(['EGP', 'USD', 'EUR'])
     .withMessage('Currency must be EGP, USD, or EUR'),
   body('message')
