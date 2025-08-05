@@ -284,8 +284,8 @@ const RequestServiceForm: React.FC = () => {
       formData.preferredDateTime.trim() &&
       formData.deliveryTimeDays.trim();
 
-    // Check if there are no validation errors
-    const hasNoErrors = Object.keys(validationErrors).length === 0;
+    // Check if there are no validation errors (only count actual error messages)
+    const hasNoErrors = Object.values(validationErrors).every(error => !error);
 
     return hasRequiredFields && hasNoErrors;
   };
@@ -319,21 +319,28 @@ const RequestServiceForm: React.FC = () => {
       formData.append('image', file);
 
       try {
-        const response = await fetch('/api/upload/image', {
+        const imgbbApiKey = import.meta.env.VITE_IMGBB_API_KEY;
+        if (!imgbbApiKey) {
+          alert('مفتاح ImgBB غير متوفر');
+          continue;
+        }
+
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
           body: formData,
         });
 
         if (response.ok) {
           const data = await response.json();
-          setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, data.imageUrl]
-          }));
-          setImageUploadProgress(prev => ({ ...prev, [file.name]: true }));
+          if (data.success && data.data && data.data.url) {
+            setFormData(prev => ({
+              ...prev,
+              images: [...prev.images, data.data.url]
+            }));
+            setImageUploadProgress(prev => ({ ...prev, [file.name]: true }));
+          } else {
+            alert(`فشل رفع الصورة ${file.name}`);
+          }
         } else {
           alert(`فشل رفع الصورة ${file.name}`);
         }

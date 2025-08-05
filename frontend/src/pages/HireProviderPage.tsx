@@ -229,16 +229,19 @@ const HireProviderPage: React.FC = () => {
         const formData = new FormData();
         formData.append('image', file);
 
-        const res = await fetch('/api/upload/image', {
+        const imgbbApiKey = import.meta.env.VITE_IMGBB_API_KEY;
+        if (!imgbbApiKey) {
+          alert('مفتاح ImgBB غير متوفر');
+          continue;
+        }
+
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken || localStorage.getItem('accessToken')}`
-          },
           body: formData
         });
 
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.data && data.data.url) {
           newImages.push(data.data.url);
         } else {
           alert(`فشل رفع الصورة ${file.name}: ${data.error?.message || 'خطأ غير معروف'}`);
