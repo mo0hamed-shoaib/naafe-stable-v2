@@ -226,10 +226,10 @@ const Header = ({ onSearch, searchValue = '' }: HeaderProps) => {
     setShowMobileSearch(false);
   };
 
-  // Navigation items: only show 'للإشتراك' for providers
+  // Navigation items: only show 'الجدول الزمني' for providers
   const navigationItems = [
     { label: 'الخدمات', href: '/categories' },
-    ...(isProvider ? [{ label: 'للإشتراك', href: '/pricing' }] : []),
+    ...(isProvider ? [{ label: 'إدارة الجدول', href: '/schedule' }] : []),
     { label: 'استكشف', href: '/search' },
   ];
 
