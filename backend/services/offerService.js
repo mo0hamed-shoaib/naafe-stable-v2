@@ -1139,6 +1139,44 @@ class OfferService {
       throw error;
     }
   }
+
+  // Get services from offers for a provider
+  async getProviderServices(providerId) {
+    try {
+      const offers = await Offer.find({ 
+        provider: providerId,
+        status: { $in: ['accepted', 'in_progress', 'completed'] }
+      })
+      .populate('jobRequest', 'title description budget deadline location category')
+      .populate('provider', 'name email phone')
+      .sort({ createdAt: -1 });
+
+      // Transform offers into service format for profile display
+      const services = offers.map(offer => ({
+        id: offer._id,
+        title: offer.jobRequest?.title || 'خدمة غير محددة',
+        description: offer.jobRequest?.description || '',
+        budget: offer.budget || offer.jobRequest?.budget,
+        deadline: offer.jobRequest?.deadline,
+        location: offer.jobRequest?.location,
+        category: offer.jobRequest?.category,
+        status: offer.status,
+        createdAt: offer.createdAt,
+        updatedAt: offer.updatedAt,
+        // Add offer-specific data
+        offerId: offer._id,
+        jobRequestId: offer.jobRequest?._id,
+        message: offer.message,
+        estimatedTimeDays: offer.estimatedTimeDays,
+        availableDates: offer.availableDates,
+        timePreferences: offer.timePreferences
+      }));
+
+      return services;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new OfferService(); 

@@ -613,6 +613,34 @@ class OfferController {
     }
   }
 
+  // Get services from offers for a provider
+  async getProviderServices(req, res) {
+    try {
+      const providerId = req.user._id;
+      
+      logger.info(`Getting services from offers for provider ${providerId}`);
+      
+      const services = await offerService.getProviderServices(providerId);
+      
+      logger.info(`Found ${services.length} services for provider ${providerId}`);
+      
+      res.status(200).json({
+        success: true,
+        data: services,
+        message: 'Services retrieved successfully'
+      });
+    } catch (error) {
+      logger.error(`Error getting provider services: ${error.message}`);
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'PROVIDER_SERVICES_ERROR',
+          message: error.message
+        }
+      });
+    }
+  }
+
 }
 
 export default new OfferController(); 

@@ -1,31 +1,56 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, Filter, Download, Plus, Edit, Trash } from 'lucide-react';
+import { Calendar, Filter, Download, Plus, Edit, Trash, Clock, User } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import BaseCard from '../components/ui/BaseCard';
 import Button from '../components/ui/Button';
 import ScheduleCalendar from '../components/ui/ScheduleCalendar';
+import ReservationModal from '../components/ui/ReservationModal';
+import AvailabilityModal from '../components/ui/AvailabilityModal';
 import useSchedule from '../hooks/useSchedule';
 import Modal from '../admin/components/UI/Modal';
+import Toast from '../components/ui/Toast';
 
 interface ScheduleItem {
   id: string;
   date: string;
   timeSlot: string;
-  status: 'pending' | 'confirmed' | 'completed';
-  serviceTitle: string;
-  seekerName: string;
-  location: string;
+  customTimeRange?: {
+    startTime: string;
+    endTime: string;
+  };
+  status: 'available' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  type: 'available' | 'reserved' | 'service';
+  title: string;
+  description?: string;
+  seekerName?: string;
+  location?: string;
+  offer?: string;
+  jobRequest?: string;
+  reservation?: {
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    notes: string;
+    estimatedDuration: number;
+    estimatedCost: number;
+  };
 }
 
 const SchedulePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const { schedule, loading, error, refetch } = useSchedule(user?.id);
   
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'available' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ScheduleItem | null>(null);
+  const [reservationData, setReservationData] = useState({ date: '', timeSlot: 'morning' });
+  const [availabilityData, setAvailabilityData] = useState({ date: '', timeSlot: 'morning' });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Filter schedule based on selected status
   const filteredSchedule = selectedStatus === 'all' 
@@ -38,9 +63,112 @@ const SchedulePage: React.FC = () => {
   };
 
   const handleItemDelete = async (itemId: string) => {
-    // TODO: Implement delete functionality with backend API
-    console.log('Delete item:', itemId);
-    await refetch();
+    if (!accessToken) return;
+    
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/schedule/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      if (res.ok) {
+        setToast({ type: 'success', message: 'تم حذف العنصر بنجاح' });
+        await refetch();
+      } else {
+        const data = await res.json();
+        setToast({ type: 'error', message: data.error?.message || 'فشل في حذف العنصر' });
+      }
+    } catch (error) {
+      setToast({ type: 'error', message: 'حدث خطأ أثناء حذف العنصر' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAddAvailability = (date: string, timeSlot: string) => {
+    setAvailabilityData({ date, timeSlot });
+    setShowAvailabilityModal(true);
+  };
+
+  const handleAddReservation = (date: string, timeSlot: string) => {
+    setReservationData({ date, timeSlot });
+    setShowReservationModal(true);
+  };
+
+  const handleAvailabilitySubmit = async (data: any) => {
+    if (!accessToken) return;
+    
+    setActionLoading(true);
+    try {
+      // Prepare data for submission
+      const submitData = {
+        ...data,
+        customTimeRanges: data.timeSlots.includes('custom') ? data.customTimeRanges : undefined
+      };
+      
+      const res = await fetch('/api/schedule/availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(submitData)
+      });
+      
+      if (res.ok) {
+        setToast({ type: 'success', message: 'تم إضافة أوقات التوفر بنجاح' });
+        setShowAvailabilityModal(false);
+        await refetch();
+      } else {
+        const errorData = await res.json();
+        setToast({ type: 'error', message: errorData.error?.message || 'فشل في إضافة أوقات التوفر' });
+      }
+    } catch (error) {
+      setToast({ type: 'error', message: 'حدث خطأ أثناء إضافة أوقات التوفر' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReservationSubmit = async (data: any) => {
+    if (!accessToken) return;
+    
+    setActionLoading(true);
+    try {
+      // Prepare data for submission
+      const submitData = {
+        ...data,
+        customTimeRange: data.timeSlot === 'custom' ? data.customTimeRange : undefined
+      };
+      
+      const res = await fetch('/api/schedule/reservation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(submitData)
+      });
+      
+      if (res.ok) {
+        setToast({ type: 'success', message: 'تم إضافة الحجز بنجاح' });
+        setShowReservationModal(false);
+        // Reset form data
+        setReservationData({ date: '', timeSlot: 'morning' });
+        await refetch();
+      } else {
+        const errorData = await res.json();
+        setToast({ type: 'error', message: errorData.error?.message || 'فشل في إضافة الحجز' });
+      }
+    } catch (error) {
+      console.error('Reservation error:', error);
+      setToast({ type: 'error', message: 'حدث خطأ أثناء إضافة الحجز' });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleExport = () => {
@@ -50,9 +178,11 @@ const SchedulePage: React.FC = () => {
 
   const statusOptions = [
     { value: 'all', label: 'الكل' },
+    { value: 'available', label: 'متاح' },
     { value: 'pending', label: 'في الانتظار' },
     { value: 'confirmed', label: 'مؤكد' },
-    { value: 'completed', label: 'مكتمل' }
+    { value: 'completed', label: 'مكتمل' },
+    { value: 'cancelled', label: 'ملغي' }
   ];
 
   if (!user || !user.roles.includes('provider')) {
@@ -83,8 +213,8 @@ const SchedulePage: React.FC = () => {
               <Calendar className="h-8 w-8 text-deep-teal" />
               <h1 className="text-3xl font-bold text-deep-teal">جدول مواعيدي</h1>
             </div>
-            <p className="text-text-secondary">
-              إدارة مواعيدك وتتبع الخدمات المقدمة
+            <p className="text-gray-700">
+              إدارة مواعيدك وتتبع الخدمات المقدمة والحجوزات
             </p>
           </div>
 
@@ -123,11 +253,20 @@ const SchedulePage: React.FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => setShowEditModal(true)}
+                  onClick={() => setShowAvailabilityModal(true)}
                   className="flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  إضافة موعد
+                  إضافة توفر
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setShowReservationModal(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  إضافة حجز
                 </Button>
               </div>
             </div>
@@ -154,32 +293,41 @@ const SchedulePage: React.FC = () => {
                 mode="editable"
                 onItemClick={handleItemClick}
                 onItemDelete={handleItemDelete}
+                onAddAvailability={handleAddAvailability}
+                onAddReservation={handleAddReservation}
                 className="w-full"
               />
             )}
           </BaseCard>
 
           {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
             <BaseCard className="text-center">
-              <div className="text-2xl font-bold text-deep-teal mb-2">
-                {schedule.filter(item => item.status === 'pending').length}
+              <div className="text-2xl font-bold text-green-600 mb-2">
+                {schedule.filter(item => item.type === 'available').length}
               </div>
-              <div className="text-sm text-text-secondary">في الانتظار</div>
+              <div className="text-sm text-gray-900 font-medium">متاح</div>
             </BaseCard>
             
             <BaseCard className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-2">
-                {schedule.filter(item => item.status === 'confirmed').length}
+              <div className="text-2xl font-bold text-yellow-600 mb-2">
+                {schedule.filter(item => item.status === 'pending').length}
               </div>
-              <div className="text-sm text-text-secondary">مؤكد</div>
+              <div className="text-sm text-gray-900 font-medium">في الانتظار</div>
             </BaseCard>
             
             <BaseCard className="text-center">
               <div className="text-2xl font-bold text-blue-600 mb-2">
+                {schedule.filter(item => item.status === 'confirmed').length}
+              </div>
+              <div className="text-sm text-gray-900 font-medium">مؤكد</div>
+            </BaseCard>
+            
+            <BaseCard className="text-center">
+              <div className="text-2xl font-bold text-deep-teal mb-2">
                 {schedule.filter(item => item.status === 'completed').length}
               </div>
-              <div className="text-sm text-text-secondary">مكتمل</div>
+              <div className="text-sm text-gray-900 font-medium">مكتمل</div>
             </BaseCard>
           </div>
         </div>
@@ -192,29 +340,71 @@ const SchedulePage: React.FC = () => {
           setShowEditModal(false);
           setSelectedItem(null);
         }}
-        title={selectedItem ? "تعديل الموعد" : "إضافة موعد جديد"}
+        title={selectedItem ? "تفاصيل الموعد" : "إضافة موعد جديد"}
         size="md"
       >
         <div className="space-y-4">
           {selectedItem ? (
             <div>
-              <p className="text-sm text-text-secondary mb-4">
-                تعديل تفاصيل الموعد المحدد
-              </p>
-              {/* TODO: Add edit form */}
-              <div className="text-center text-text-secondary">
-                نموذج التعديل سيتم إضافته لاحقاً
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">التاريخ</label>
+                  <p className="text-sm text-gray-900">{selectedItem.date}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">النوع</label>
+                  <p className="text-sm text-gray-900">
+                    {selectedItem.type === 'available' ? 'متاح' : 
+                     selectedItem.type === 'reserved' ? 'حجز' : 'خدمة'}
+                  </p>
+                </div>
               </div>
+              
+              {selectedItem.title && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                  <p className="text-sm text-gray-900">{selectedItem.title}</p>
+                </div>
+              )}
+              
+              {selectedItem.seekerName && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">العميل</label>
+                  <p className="text-sm text-gray-900">{selectedItem.seekerName}</p>
+                </div>
+              )}
+              
+              {selectedItem.reservation && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-deep-teal">تفاصيل الحجز</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">الهاتف:</span>
+                      <p>{selectedItem.reservation.clientPhone}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">المدة:</span>
+                      <p>{selectedItem.reservation.estimatedDuration} ساعة</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">التكلفة:</span>
+                      <p>{selectedItem.reservation.estimatedCost} جنيه</p>
+                    </div>
+                  </div>
+                  {selectedItem.reservation.notes && (
+                    <div>
+                      <span className="text-gray-600">ملاحظات:</span>
+                      <p className="text-sm">{selectedItem.reservation.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div>
               <p className="text-sm text-text-secondary mb-4">
-                إضافة موعد جديد إلى جدولك
+                اختر موعداً من الجدول لعرض تفاصيله
               </p>
-              {/* TODO: Add new appointment form */}
-              <div className="text-center text-text-secondary">
-                نموذج الإضافة سيتم إضافته لاحقاً
-              </div>
             </div>
           )}
           
@@ -226,14 +416,40 @@ const SchedulePage: React.FC = () => {
                 setSelectedItem(null);
               }}
             >
-              إلغاء
-            </Button>
-            <Button variant="primary">
-              حفظ
+              إغلاق
             </Button>
           </div>
         </div>
       </Modal>
+
+      {/* Availability Modal */}
+      <AvailabilityModal
+        isOpen={showAvailabilityModal}
+        onClose={() => setShowAvailabilityModal(false)}
+        onSubmit={handleAvailabilitySubmit}
+        loading={actionLoading}
+        initialDate={availabilityData.date}
+        initialTimeSlot={availabilityData.timeSlot}
+      />
+
+      {/* Reservation Modal */}
+      <ReservationModal
+        isOpen={showReservationModal}
+        onClose={() => setShowReservationModal(false)}
+        onSubmit={handleReservationSubmit}
+        loading={actionLoading}
+        initialDate={reservationData.date}
+        initialTimeSlot={reservationData.timeSlot}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       <Footer />
     </div>

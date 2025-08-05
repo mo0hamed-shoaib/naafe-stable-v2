@@ -23,6 +23,18 @@ router.get('/',
 );
 
 /**
+ * @route   GET /api/offers/users/me/services
+ * @desc    Get services from offers for the current provider
+ * @access  Private (Provider only)
+ * @returns {object} Array of services from offers
+ */
+router.get('/users/me/services', 
+  authenticateToken, 
+  requireRole(['provider']), 
+  offerController.getProviderServices
+);
+
+/**
  * @route   GET /api/offers/:offerId
  * @desc    Get a specific offer by ID
  * @access  Private (Offer owner, job request owner, or admin)

@@ -385,9 +385,14 @@ const ProfilePage: React.FC = () => {
     return `${user.name?.first || ''} ${user.name?.last || ''}`.trim();
   };
 
-  // Helper: get roles
+  // Helper: get roles (prioritize provider role)
   const getRoles = (user: Profile | null) => {
     if (!user?.roles) return [];
+    // If user is a provider, only show provider role
+    if (user.roles.includes('provider')) {
+      return ['provider'];
+    }
+    // Otherwise return all roles
     return user.roles;
   };
 

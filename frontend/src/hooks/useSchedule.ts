@@ -5,10 +5,26 @@ interface ScheduleItem {
   id: string;
   date: string;
   timeSlot: string;
-  status: 'pending' | 'confirmed' | 'completed';
-  serviceTitle: string;
-  seekerName: string;
-  location: string;
+  customTimeRange?: {
+    startTime: string;
+    endTime: string;
+  };
+  status: 'available' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  type: 'available' | 'reserved' | 'service';
+  title: string;
+  description?: string;
+  seekerName?: string;
+  location?: string;
+  offer?: string;
+  jobRequest?: string;
+  reservation?: {
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    notes: string;
+    estimatedDuration: number;
+    estimatedCost: number;
+  };
 }
 
 interface ScheduleData {
@@ -36,13 +52,19 @@ const useSchedule = (providerId?: string): UseScheduleReturn => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/schedule/${providerId || user?.id}`, {
+      // Get current month range
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      const res = await fetch(`/api/schedule/${providerId || user?.id}?startDate=${startDate}&endDate=${endDate}`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
       });
       if (!res.ok) throw new Error('Failed to fetch schedule');
       const data: { success: boolean; data: { schedule: ScheduleItem[] } } = await res.json();
+      console.log('Received schedule data:', data.data.schedule);
       setSchedule(data.data.schedule);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch schedule');
