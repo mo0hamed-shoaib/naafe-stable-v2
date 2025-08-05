@@ -22,8 +22,14 @@ interface Response {
   isPremium?: boolean;
   message?: string;
   estimatedTimeDays?: number;
-  availableDates?: string[];
-  timePreferences?: string[];
+  selectedScheduleItems?: Array<{
+    date: string;
+    timeSlot: string;
+    customTimeRange?: {
+      startTime: string;
+      endTime: string;
+    };
+  }>;
   createdAt?: string;
   jobRequestSeekerId?: string;
   status?: string; // 'pending', 'accepted', 'rejected'
@@ -94,8 +100,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
     specialties: resp.specialties || [],
     message: resp.message || '',
     estimatedTimeDays: resp.estimatedTimeDays || 1,
-    availableDates: resp.availableDates || [],
-    timePreferences: resp.timePreferences || [],
+    selectedScheduleItems: resp.selectedScheduleItems || [],
     status: resp.status || 'pending',
     providerId: resp.providerId || '',
     jobRequestSeekerId: seekerId, // Always set from prop
@@ -374,51 +379,58 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                 </div>
               )}
 
-              {/* Availability Information */}
-              {((resp.availableDates && resp.availableDates.length > 0) || (resp.timePreferences && resp.timePreferences.length > 0)) && (
+              {/* Schedule Information */}
+              {resp.selectedScheduleItems && resp.selectedScheduleItems.length > 0 && (
                 <div className="mb-4 p-4 bg-warm-cream rounded-lg border border-deep-teal/10">
-                  <h4 className="text-sm font-semibold text-deep-teal mb-4 text-center">التواريخ والأوقات المتاحة</h4>
+                  <h4 className="text-sm font-semibold text-deep-teal mb-4 text-center">الأوقات المختارة من الجدول الزمني</h4>
                   
-                  {/* Available Dates */}
-                  {resp.availableDates && resp.availableDates.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calendar className="h-4 w-4 text-deep-teal" />
-                        <span className="text-sm font-medium text-deep-teal">التواريخ المتاحة:</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {resp.availableDates.slice(0, 6).map((date, index) => (
-                          <div key={`date-${resp.id}-${index}`} className="bg-white px-2 py-1 rounded-md border border-deep-teal/20 text-center min-w-[80px]">
-                            <span className="text-xs text-deep-teal font-medium">{formatDate(date)}</span>
-                          </div>
-                        ))}
-                        {resp.availableDates.length > 6 && (
-                          <div className="bg-deep-teal/10 px-2 py-1 rounded-md border border-deep-teal/20 text-center">
-                            <span className="text-xs text-deep-teal font-medium">
-                              +{resp.availableDates.length - 6} تاريخ
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="space-y-3">
+                    {resp.selectedScheduleItems.slice(0, 6).map((item, index) => {
+                      const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                        if (timeSlot === 'custom' && customTimeRange) {
+                          return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                        }
+                        switch (timeSlot) {
+                          case 'morning': return 'صباحاً (8:00 ص - 12:00 م)';
+                          case 'afternoon': return 'ظهراً (12:00 م - 4:00 م)';
+                          case 'evening': return 'مساءً (4:00 م - 8:00 م)';
+                          case 'full_day': return 'يوم كامل (8:00 ص - 8:00 م)';
+                          default: return timeSlot;
+                        }
+                      };
 
-                  {/* Time Preferences */}
-                  {resp.timePreferences && resp.timePreferences.length > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock className="h-4 w-4 text-deep-teal" />
-                        <span className="text-sm font-medium text-deep-teal">تفضيلات الوقت:</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {resp.timePreferences.map((pref, index) => (
-                          <div key={`time-${resp.id}-${index}`} className="bg-white px-2 py-1 rounded-md border border-deep-teal/20 text-center">
-                            <span className="text-xs font-medium text-deep-teal">{getTimePreferenceLabel(pref)}</span>
+                      return (
+                        <div key={`schedule-${resp.id}-${index}`} className="bg-white px-3 py-2 rounded-md border border-deep-teal/20">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-3 w-3 text-deep-teal" />
+                              <span className="text-xs text-deep-teal font-medium">
+                                {new Date(item.date).toLocaleDateString('ar-EG', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3 text-deep-teal" />
+                              <span className="text-xs text-deep-teal font-medium">
+                                {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
+                              </span>
+                            </div>
                           </div>
-                        ))}
+                        </div>
+                      );
+                    })}
+                    
+                    {resp.selectedScheduleItems.length > 6 && (
+                      <div className="bg-deep-teal/10 px-3 py-2 rounded-md border border-deep-teal/20 text-center">
+                        <span className="text-xs text-deep-teal font-medium">
+                          +{resp.selectedScheduleItems.length - 6} وقت إضافي
+                        </span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
 

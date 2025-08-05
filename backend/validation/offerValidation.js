@@ -22,22 +22,26 @@ const createOfferValidation = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Estimated time must be at least 1 day'),
-  body('availableDates')
+  body('selectedScheduleItems')
     .optional()
     .isArray()
-    .withMessage('Available dates must be an array'),
-  body('availableDates.*')
+    .withMessage('Selected schedule items must be an array'),
+  body('selectedScheduleItems.*.date')
     .optional()
-    .isISO8601()
-    .withMessage('Each date must be a valid ISO date string'),
-  body('timePreferences')
+    .isString()
+    .withMessage('Schedule item date must be a string'),
+  body('selectedScheduleItems.*.timeSlot')
     .optional()
-    .isArray()
-    .withMessage('Time preferences must be an array'),
-  body('timePreferences.*')
+    .isIn(['morning', 'afternoon', 'evening', 'full_day', 'custom'])
+    .withMessage('Time slot must be one of: morning, afternoon, evening, full_day, custom'),
+  body('selectedScheduleItems.*.customTimeRange.startTime')
     .optional()
-    .isIn(['morning', 'afternoon', 'evening', 'flexible'])
-    .withMessage('Time preference must be one of: morning, afternoon, evening, flexible')
+    .isString()
+    .withMessage('Custom time range start time must be a string'),
+  body('selectedScheduleItems.*.customTimeRange.endTime')
+    .optional()
+    .isString()
+    .withMessage('Custom time range end time must be a string')
 ];
 
 // Validation rules for updating an offer
@@ -62,22 +66,26 @@ const updateOfferValidation = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Estimated time must be at least 1 day'),
-  body('availableDates')
+  body('selectedScheduleItems')
     .optional()
     .isArray()
-    .withMessage('Available dates must be an array'),
-  body('availableDates.*')
+    .withMessage('Selected schedule items must be an array'),
+  body('selectedScheduleItems.*.date')
     .optional()
-    .isISO8601()
-    .withMessage('Each date must be a valid ISO date string'),
-  body('timePreferences')
+    .isString()
+    .withMessage('Schedule item date must be a string'),
+  body('selectedScheduleItems.*.timeSlot')
     .optional()
-    .isArray()
-    .withMessage('Time preferences must be an array'),
-  body('timePreferences.*')
+    .isIn(['morning', 'afternoon', 'evening', 'full_day', 'custom'])
+    .withMessage('Time slot must be one of: morning, afternoon, evening, full_day, custom'),
+  body('selectedScheduleItems.*.customTimeRange.startTime')
     .optional()
-    .isIn(['morning', 'afternoon', 'evening', 'flexible'])
-    .withMessage('Time preference must be one of: morning, afternoon, evening, flexible')
+    .isString()
+    .withMessage('Custom time range start time must be a string'),
+  body('selectedScheduleItems.*.customTimeRange.endTime')
+    .optional()
+    .isString()
+    .withMessage('Custom time range end time must be a string')
 ];
 
 // Validation for offer ID parameter

@@ -6,19 +6,25 @@ import { X, Star, Shield, Calendar, Clock } from 'lucide-react';
 import Button from './ui/Button';
 import BaseCard from './ui/BaseCard';
 import Badge from './ui/Badge';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+
 import { FormInput, FormTextarea, BudgetIndicator, NegotiationToggle, BudgetExplanationTextarea, ScheduleModal } from "./ui";
 import UnifiedSelect from "./ui/UnifiedSelect";
 import Header from './Header';
 import Footer from './Footer';
+import useSchedule from '../hooks/useSchedule';
 
 interface FormData {
   timeline: string;
   duration: string;
   message: string;
-  availableDates: Date[];
-  timePreferences: string[];
+  selectedScheduleItems: Array<{
+    date: string;
+    timeSlot: string;
+    customTimeRange?: {
+      startTime: string;
+      endTime: string;
+    };
+  }>;
   agreedToTerms: boolean;
   negotiationAcknowledged: boolean;
   budgetExplanation: string;
@@ -45,8 +51,14 @@ interface Offer {
   verified?: boolean;
   message?: string;
   estimatedTimeDays?: number;
-  availableDates?: string[];
-  timePreferences?: string[];
+  selectedScheduleItems?: Array<{
+    date: string;
+    timeSlot: string;
+    customTimeRange?: {
+      startTime: string;
+      endTime: string;
+    };
+  }>;
   createdAt?: string;
 }
 
@@ -60,8 +72,7 @@ const ServiceResponseForm: React.FC = () => {
     timeline: '',
     duration: '',
     message: '',
-    availableDates: [],
-    timePreferences: [],
+    selectedScheduleItems: [],
     agreedToTerms: false,
     negotiationAcknowledged: false,
     budgetExplanation: '',
@@ -73,6 +84,9 @@ const ServiceResponseForm: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  
+  // Get provider's schedule
+  const { schedule, loading: scheduleLoading, error: scheduleError } = useSchedule(user?.id);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -103,39 +117,38 @@ const ServiceResponseForm: React.FC = () => {
     if (jobRequestId) fetchData();
   }, [jobRequestId, accessToken]);
 
-  const handleDateChange = (date: Date | null) => {
-    if (!date) return;
-    
+  const handleScheduleItemSelect = (scheduleItem: any) => {
     setFormData(prev => {
-      const dateString = date.toDateString();
-      const isAlreadySelected = prev.availableDates.some(
-        selectedDate => selectedDate.toDateString() === dateString
+      const isAlreadySelected = prev.selectedScheduleItems.some(
+        item => item.date === scheduleItem.date && item.timeSlot === scheduleItem.timeSlot
       );
       
       if (isAlreadySelected) {
-        // Remove the date if already selected
         return {
           ...prev,
-          availableDates: prev.availableDates.filter(
-            selectedDate => selectedDate.toDateString() !== dateString
+          selectedScheduleItems: prev.selectedScheduleItems.filter(
+            item => !(item.date === scheduleItem.date && item.timeSlot === scheduleItem.timeSlot)
           )
         };
       } else {
-        // Add the new date
         return {
           ...prev,
-          availableDates: [...prev.availableDates, date].sort((a, b) => a.getTime() - b.getTime())
+          selectedScheduleItems: [...prev.selectedScheduleItems, {
+            date: scheduleItem.date,
+            timeSlot: scheduleItem.timeSlot,
+            customTimeRange: scheduleItem.customTimeRange
+          }]
         };
       }
     });
   };
 
-  const handleTimePreferenceChange = (preference: string, checked: boolean) => {
+  const handleScheduleItemDeselect = (date: string, timeSlot: string) => {
     setFormData(prev => ({
       ...prev,
-      timePreferences: checked
-        ? [...prev.timePreferences, preference]
-        : prev.timePreferences.filter(p => p !== preference)
+      selectedScheduleItems: prev.selectedScheduleItems.filter(
+        item => !(item.date === date && item.timeSlot === timeSlot)
+      )
     }));
   };
 
@@ -148,8 +161,7 @@ const ServiceResponseForm: React.FC = () => {
       const offerData = {
         message: formData.message,
         estimatedTimeDays: Number(formData.duration) || 1,
-        availableDates: formData.availableDates.map(date => date.toISOString()),
-        timePreferences: formData.timePreferences
+        selectedScheduleItems: formData.selectedScheduleItems
       };
 
       const res = await fetch(`/api/requests/${jobRequestId}/offers`, {
@@ -174,8 +186,7 @@ const ServiceResponseForm: React.FC = () => {
         verified: providerData?.providerProfile?.verification?.status === 'verified',
         message: formData.message,
         estimatedTimeDays: parseInt(formData.duration) || 1,
-        availableDates: formData.availableDates.map(date => date.toISOString()),
-        timePreferences: formData.timePreferences,
+        selectedScheduleItems: formData.selectedScheduleItems,
         createdAt: new Date().toISOString(),
       };
 
@@ -364,12 +375,12 @@ const ServiceResponseForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Availability Section */}
+            {/* Schedule Selection Section */}
             <div>
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-deep-teal flex items-center">
                   <Calendar className="h-5 w-5 ml-2" />
-                  التواريخ المتاحة
+                  اختيار من الجدول الزمني
                 </h2>
                 <Button
                   type="button"
@@ -379,91 +390,160 @@ const ServiceResponseForm: React.FC = () => {
                   className="flex items-center gap-2"
                 >
                   <Calendar className="h-4 w-4" />
-                  فحص الجدول
+                  عرض الجدول الكامل
                 </Button>
               </div>
               
-              <div className="mb-6">
-                <label className="text-sm font-medium text-text-primary mb-3 block">
-                  اختر التواريخ المتاحة لك
-                </label>
-                <p className="text-xs text-text-secondary mb-3">
-                  انقر على التواريخ لتحديدها أو إلغاء تحديدها
-                </p>
-                <div className="relative">
-                  <DatePicker
-                    selected={null}
-                    onChange={handleDateChange}
-                    inline
-                    minDate={new Date()}
-                    maxDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="اختر التواريخ المتاحة"
-                    className="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-teal focus:border-deep-teal"
-                    dayClassName={(date) => {
-                      const isSelected = formData.availableDates.some(
-                        selectedDate => selectedDate.toDateString() === date.toDateString()
-                      );
-                      return isSelected ? '!bg-deep-teal !text-white !font-semibold rounded' : '';
-                    }}
-                  />
+              {scheduleLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-deep-teal mx-auto mb-4"></div>
+                  <p className="text-text-secondary">جاري تحميل الجدول الزمني...</p>
                 </div>
-                {formData.availableDates.length > 0 && (
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-text-secondary">التواريخ المختارة ({formData.availableDates.length} يوم):</p>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, availableDates: [] }))}
-                        className="text-xs text-red-500 hover:text-red-700 underline"
-                      >
-                        مسح الكل
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.availableDates.slice(0, 8).map((date, index) => (
-                        <Badge key={index} variant="category">
-                          {date.toLocaleDateString('ar-EG', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </Badge>
-                      ))}
-                      {formData.availableDates.length > 8 && (
-                        <Badge variant="category">
-                          +{formData.availableDates.length - 8} أكثر
-                        </Badge>
-                      )}
-                    </div>
+              ) : scheduleError ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{scheduleError}</p>
+                </div>
+              ) : schedule && schedule.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="mb-4">
+                    <p className="text-sm text-text-secondary mb-3">
+                      اختر من الأوقات المتاحة في جدولك الزمني
+                    </p>
                   </div>
-                )}
-              </div>
+                  
+                  {/* Available Schedule Items */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {schedule
+                      .filter(item => item.type === 'available')
+                      .map((item, index) => {
+                        const isSelected = formData.selectedScheduleItems.some(
+                          selected => selected.date === item.date && selected.timeSlot === item.timeSlot
+                        );
+                        
+                        const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                          if (timeSlot === 'custom' && customTimeRange) {
+                            return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                          }
+                          switch (timeSlot) {
+                            case 'morning': return 'صباحاً (8:00 ص - 12:00 م)';
+                            case 'afternoon': return 'ظهراً (12:00 م - 4:00 م)';
+                            case 'evening': return 'مساءً (4:00 م - 8:00 م)';
+                            case 'full_day': return 'يوم كامل (8:00 ص - 8:00 م)';
+                            default: return timeSlot;
+                          }
+                        };
 
-              <div>
-                <label className="text-sm font-medium text-text-primary mb-3 block flex items-center">
-                  <Clock className="h-4 w-4 ml-2" />
-                  تفضيلات الوقت
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'morning', label: 'صباحاً (8 ص - 12 م)' },
-                    { value: 'afternoon', label: 'ظهراً (12 م - 4 م)' },
-                    { value: 'evening', label: 'مساءً (4 م - 8 م)' },
-                    { value: 'flexible', label: 'مرن (أي وقت)' }
-                  ].map((timeSlot) => (
-                    <label key={timeSlot.value} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.timePreferences.includes(timeSlot.value)}
-                        onChange={(e) => handleTimePreferenceChange(timeSlot.value, e.target.checked)}
-                        className="rounded border-gray-300 text-deep-teal focus:ring-deep-teal"
-                      />
-                      <span className="text-sm text-text-primary">{timeSlot.label}</span>
-                    </label>
-                  ))}
+                        return (
+                          <div
+                            key={index}
+                            className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'border-deep-teal bg-deep-teal/5' 
+                                : 'border-gray-200 hover:border-deep-teal/50 hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleScheduleItemSelect(item)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-text-primary">
+                                  {new Date(item.date).toLocaleDateString('ar-EG', {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </p>
+                                <p className="text-sm text-text-secondary">
+                                  {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
+                                </p>
+                              </div>
+                              <div className={`w-4 h-4 rounded-full border-2 ${
+                                isSelected 
+                                  ? 'bg-deep-teal border-deep-teal' 
+                                  : 'border-gray-300'
+                              }`}>
+                                {isSelected && (
+                                  <div className="w-full h-full bg-deep-teal rounded-full flex items-center justify-center">
+                                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  
+                  {/* Selected Items Summary */}
+                  {formData.selectedScheduleItems.length > 0 && (
+                    <div className="mt-4 p-4 bg-deep-teal/5 border border-deep-teal/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-medium text-deep-teal">
+                          الأوقات المختارة ({formData.selectedScheduleItems.length})
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, selectedScheduleItems: [] }))}
+                          className="text-xs text-red-500 hover:text-red-700 underline"
+                        >
+                          مسح الكل
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {formData.selectedScheduleItems.map((item, index) => {
+                          const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                            if (timeSlot === 'custom' && customTimeRange) {
+                              return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                            }
+                            switch (timeSlot) {
+                              case 'morning': return 'صباحاً';
+                              case 'afternoon': return 'ظهراً';
+                              case 'evening': return 'مساءً';
+                              case 'full_day': return 'يوم كامل';
+                              default: return timeSlot;
+                            }
+                          };
+
+                          return (
+                            <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                              <span className="text-sm text-text-primary">
+                                {new Date(item.date).toLocaleDateString('ar-EG', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })} - {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleScheduleItemDeselect(item.date, item.timeSlot)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-text-secondary mb-2">لا توجد أوقات متاحة في جدولك الزمني</p>
+                  <p className="text-xs text-text-secondary">
+                    قم بإضافة أوقات توفر في صفحة الجدول الزمني أولاً
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/schedule')}
+                    className="mt-3"
+                  >
+                    الذهاب إلى الجدول الزمني
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Message Section */}
@@ -551,39 +631,39 @@ const ServiceResponseForm: React.FC = () => {
                   <p className="text-text-primary">{getTimelineDisplay()}</p>
                 </div>
 
-                {formData.availableDates.length > 0 && (
+                {formData.selectedScheduleItems.length > 0 && (
                   <div>
-                    <p className="text-sm font-semibold text-text-secondary">التواريخ المتاحة ({formData.availableDates.length} يوم)</p>
+                    <p className="text-sm font-semibold text-text-secondary">الأوقات المختارة ({formData.selectedScheduleItems.length})</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {formData.availableDates.slice(0, 5).map((date, index) => (
-                        <Badge key={index} variant="category" className="text-xs">
-                          {date.toLocaleDateString('ar-EG', { 
-                            weekday: 'short',
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </Badge>
-                      ))}
-                      {formData.availableDates.length > 5 && (
+                      {formData.selectedScheduleItems.slice(0, 5).map((item, index) => {
+                        const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                          if (timeSlot === 'custom' && customTimeRange) {
+                            return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                          }
+                          switch (timeSlot) {
+                            case 'morning': return 'صباحاً';
+                            case 'afternoon': return 'ظهراً';
+                            case 'evening': return 'مساءً';
+                            case 'full_day': return 'يوم كامل';
+                            default: return timeSlot;
+                          }
+                        };
+
+                        return (
+                          <Badge key={index} variant="category" className="text-xs">
+                            {new Date(item.date).toLocaleDateString('ar-EG', { 
+                              weekday: 'short',
+                              month: 'short', 
+                              day: 'numeric' 
+                            })} - {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
+                          </Badge>
+                        );
+                      })}
+                      {formData.selectedScheduleItems.length > 5 && (
                         <Badge variant="category" className="text-xs">
-                          +{formData.availableDates.length - 5} أكثر
+                          +{formData.selectedScheduleItems.length - 5} أكثر
                         </Badge>
                       )}
-                    </div>
-                  </div>
-                )}
-
-                {formData.timePreferences.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-text-secondary">تفضيلات الوقت</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                                             {formData.timePreferences.map((pref, index) => (
-                         <Badge key={index} variant="category" className="text-xs">
-                           {pref === 'morning' ? 'صباحاً' : 
-                            pref === 'afternoon' ? 'ظهراً' : 
-                            pref === 'evening' ? 'مساءً' : 'مرن'}
-                         </Badge>
-                       ))}
                     </div>
                   </div>
                 )}

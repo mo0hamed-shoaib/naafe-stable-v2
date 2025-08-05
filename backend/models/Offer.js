@@ -39,15 +39,21 @@ const offerSchema = new mongoose.Schema({
     default: 1,
     min: [1, 'Estimated time must be at least 1 day']
   },
-  // Availability fields
-  availableDates: [{
-    type: Date,
-    required: false
-  }],
-  timePreferences: [{
-    type: String,
-    enum: ['morning', 'afternoon', 'evening', 'flexible'],
-    required: false
+  // Schedule-based availability
+  selectedScheduleItems: [{
+    date: {
+      type: String,
+      required: true
+    },
+    timeSlot: {
+      type: String,
+      enum: ['morning', 'afternoon', 'evening', 'full_day', 'custom'],
+      required: true
+    },
+    customTimeRange: {
+      startTime: { type: String },
+      endTime: { type: String }
+    }
   }],
   // Negotiation object for offer-based agreement
   negotiation: {

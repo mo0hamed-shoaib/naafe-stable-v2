@@ -51,8 +51,7 @@ class OfferService {
         budget: offerData.budget || undefined,
         message: offerData.message,
         estimatedTimeDays: offerData.estimatedTimeDays,
-        availableDates: offerData.availableDates || [],
-        timePreferences: offerData.timePreferences || [],
+        selectedScheduleItems: offerData.selectedScheduleItems || [],
         status: 'pending'
       });
       
@@ -248,7 +247,7 @@ class OfferService {
       }
       
       // Update allowed fields
-      const allowedUpdates = ['budget', 'message', 'estimatedTimeDays', 'availableDates', 'timePreferences'];
+      const allowedUpdates = ['budget', 'message', 'estimatedTimeDays', 'selectedScheduleItems'];
       allowedUpdates.forEach(field => {
         if (updateData[field] !== undefined) {
           offer[field] = updateData[field];
