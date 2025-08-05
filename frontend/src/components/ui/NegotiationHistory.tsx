@@ -10,15 +10,14 @@ interface NegotiationHistoryProps {
 
 const fieldLabels: Record<string, string> = {
   price: 'السعر',
-  date: 'التاريخ',
-  time: 'الوقت',
   materials: 'المواد',
   scope: 'نطاق العمل',
+  selectedScheduleIndex: 'التاريخ والوقت المتفق عليه',
   confirmation: 'تأكيد الاتفاق',
 };
 
 // Helper function to format values for display
-const formatValue = (value: any): string => {
+const formatValue = (value: any, field?: string): string => {
   if (value === null || value === undefined) {
     return '';
   }
@@ -34,6 +33,11 @@ const formatValue = (value: any): string => {
     }
     // For other objects, return a JSON representation
     return JSON.stringify(value);
+  }
+  
+  // Handle selectedScheduleIndex specially
+  if (field === 'selectedScheduleIndex' && typeof value === 'number') {
+    return `الموعد رقم ${value + 1}`;
   }
   
   return String(value);
@@ -75,7 +79,7 @@ const NegotiationHistory: React.FC<NegotiationHistoryProps> = ({ negotiationHist
                   <span className="font-medium text-deep-teal">{fieldLabels[entry.field] || entry.field}:</span>
                   {entry.oldValue !== undefined && entry.oldValue !== null && (
                     <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs">
-                      {formatValue(entry.oldValue)}
+                      {formatValue(entry.oldValue, entry.field)}
                     </span>
                   )}
                   {entry.oldValue !== undefined && entry.newValue !== undefined && (
@@ -83,7 +87,7 @@ const NegotiationHistory: React.FC<NegotiationHistoryProps> = ({ negotiationHist
                   )}
                   {entry.newValue !== undefined && entry.newValue !== null && (
                     <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">
-                      {formatValue(entry.newValue)}
+                      {formatValue(entry.newValue, entry.field)}
                     </span>
                   )}
                 </div>

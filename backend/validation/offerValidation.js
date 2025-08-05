@@ -94,6 +94,31 @@ const jobRequestIdValidation = [
     .withMessage('Invalid job request ID format')
 ];
 
+// Validation for updating negotiation terms
+const updateNegotiationValidation = [
+  body('price')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Price must be a positive number'),
+  body('materials')
+    .optional()
+    .isString()
+    .isLength({ max: 500 })
+    .withMessage('Materials description cannot exceed 500 characters'),
+  body('scope')
+    .optional()
+    .isString()
+    .isLength({ max: 500 })
+    .withMessage('Scope description cannot exceed 500 characters'),
+  body('selectedScheduleIndex')
+    .optional()
+    .custom((value) => {
+      const num = parseInt(value);
+      return !isNaN(num) && num >= 0;
+    })
+    .withMessage('Selected schedule index must be a non-negative integer')
+];
+
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -121,5 +146,6 @@ export {
   updateOfferValidation,
   offerIdValidation,
   jobRequestIdValidation,
+  updateNegotiationValidation,
   handleValidationErrors
 }; 

@@ -3,10 +3,21 @@ import { NegotiationState, NegotiationTerms } from '../../contexts/OfferContext'
 import { ServiceRequest } from '../../types';
 import type { Offer } from '../../contexts/OfferContext';
 import UnifiedInput from '../ui/FormInput';
+import UnifiedSelect from './UnifiedSelect';
 import { DatePicker, TimePicker, ConfigProvider } from 'antd';
 import dayjs from 'dayjs';
 import arEG from 'antd/locale/ar_EG';
 import { CheckCircle2, XCircle, AlertCircle, Clock, CalendarDays, Tag, FileText, Palette, Shield } from 'lucide-react';
+
+// Helper function to format time in 12-hour format
+const formatTime12Hour = (time: string): string => {
+  if (!time) return '';
+  const [h, m] = time.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return time;
+  const hour12 = ((h % 12) || 12);
+  const ampm = h < 12 ? 'ص' : 'م';
+  return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+};
 
 interface NegotiationSummaryProps {
   negotiation: NegotiationState;
@@ -235,41 +246,32 @@ const NegotiationSummary: React.FC<NegotiationSummaryProps> = ({
                 </div>
                 
                 <div className="flex flex-col gap-1">
-                  <label className="font-medium text-text-secondary text-sm">التاريخ المتفق عليه</label>
+                  <label className="font-medium text-text-secondary text-sm">التاريخ والوقت المتفق عليه</label>
                   <ConfigProvider locale={arEG}>
-                    <DatePicker
-                      format="YYYY-MM-DD"
-                      value={editTerms.date ? dayjs(editTerms.date) : null}
-                      onChange={val => setEditTerms((t: NegotiationTerms) => ({ ...t, date: val ? val.toISOString() : '' }))}
-                      className="w-full"
-                      placeholder="اختر التاريخ"
-                      style={{ direction: 'rtl' }}
-                      classNames={{ popup: { root: "custom-datepicker-dropdown" } }}
-                      disabledDate={current => current && current < dayjs().startOf('day')}
-                    />
-                  </ConfigProvider>
-                </div>
-                
-                <div className="flex flex-col gap-1">
-                  <label className="font-medium text-text-secondary text-sm">الوقت المتفق عليه</label>
-                  <ConfigProvider locale={arEG}>
-                    <TimePicker
-                      use12Hours
-                      showSecond={false}
-                      format={(value) => {
-                        if (!value) return '';
-                        const hour = value.hour();
-                        const minute = value.minute();
-                        const period = hour < 12 ? 'ص' : 'م';
-                        const hour12 = hour % 12 || 12;
-                        return `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
-                      }}
-                      value={editTerms.time ? dayjs(editTerms.time, 'HH:mm') : null}
-                      onChange={val => setEditTerms((t: NegotiationTerms) => ({ ...t, time: val ? val.format('HH:mm') : '' }))}
-                      className="w-full"
-                      placeholder="اختر الوقت"
-                      style={{ direction: 'rtl' }}
-                      classNames={{ popup: { root: "custom-datepicker-dropdown" } }}
+                    <UnifiedSelect
+                      value={editTerms.selectedScheduleIndex?.toString() || ''}
+                      onChange={val => setEditTerms((t: NegotiationTerms) => ({ 
+                        ...t, 
+                        selectedScheduleIndex: val ? parseInt(val) : undefined 
+                      }))}
+                      options={offer.selectedScheduleItems?.map((item, index) => ({
+                        value: index.toString(),
+                        label: `${dayjs(item.date).format('YYYY-MM-DD')} - ${
+                          item.timeSlot === 'custom' && item.customTimeRange ? (
+                            `${formatTime12Hour(item.customTimeRange.startTime)} - ${formatTime12Hour(item.customTimeRange.endTime)}`
+                          ) : (
+                            {
+                              morning: 'صباحاً (8:00 ص - 12:00 م)',
+                              afternoon: 'ظهراً (12:00 م - 4:00 م)',
+                              evening: 'مساءً (4:00 م - 8:00 م)',
+                              full_day: 'يوم كامل (8:00 ص - 8:00 م)'
+                            }[item.timeSlot] || item.timeSlot
+                          )
+                        }`
+                      })) || []}
+                      placeholder="اختر التاريخ والوقت المتاح"
+                      size="sm"
+                      disabled={!offer.selectedScheduleItems || offer.selectedScheduleItems.length === 0}
                     />
                   </ConfigProvider>
                 </div>
@@ -329,24 +331,35 @@ const NegotiationSummary: React.FC<NegotiationSummaryProps> = ({
                 <div className="flex items-start gap-2">
                   <CalendarDays className="w-4 h-4 text-deep-teal mt-1 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-text-secondary text-sm">التاريخ المتفق عليه</p>
-                    <p className="text-text-primary">
-                      {currentTerms.date 
-                        ? dayjs(currentTerms.date).format('YYYY-MM-DD') 
-                        : <span className="text-amber-500 text-sm">لم يتم تحديده بعد</span>}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-deep-teal mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-text-secondary text-sm">الوقت المتفق عليه</p>
-                    <p className="text-text-primary">
-                      {currentTerms.time 
-                        ? dayjs(currentTerms.time, 'HH:mm').format('hh:mm A').replace('AM', 'ص').replace('PM', 'م') 
-                        : <span className="text-amber-500 text-sm">لم يتم تحديده بعد</span>}
-                    </p>
+                    <p className="font-medium text-text-secondary text-sm">التاريخ والوقت المتفق عليه</p>
+                    <div className="text-text-primary">
+                      {currentTerms.selectedScheduleIndex !== undefined && 
+                       offer.selectedScheduleItems && 
+                       offer.selectedScheduleItems[currentTerms.selectedScheduleIndex] ? (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">
+                            {dayjs(offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].date).format('YYYY-MM-DD')}
+                          </span>
+                          <span>-</span>
+                          <span>
+                            {offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].timeSlot === 'custom' && 
+                             offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].customTimeRange ? (
+                              `${formatTime12Hour(offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].customTimeRange.startTime)} - ${formatTime12Hour(offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].customTimeRange.endTime)}`
+                            ) : (
+                              {
+                                morning: 'صباحاً (8:00 ص - 12:00 م)',
+                                afternoon: 'ظهراً (12:00 م - 4:00 م)',
+                                evening: 'مساءً (4:00 م - 8:00 م)',
+                                full_day: 'يوم كامل (8:00 ص - 8:00 م)'
+                              }[offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].timeSlot] || 
+                              offer.selectedScheduleItems[currentTerms.selectedScheduleIndex].timeSlot
+                            )}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-amber-500 text-sm">لم يتم اختيار موعد بعد</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 

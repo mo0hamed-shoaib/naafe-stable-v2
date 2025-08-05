@@ -54,10 +54,9 @@ const offerSchema = new mongoose.Schema({
   // Negotiation object for offer-based agreement
   negotiation: {
     price: { type: Number },
-    date: { type: Date },
-    time: { type: String },
     materials: { type: String },
     scope: { type: String },
+    selectedScheduleIndex: { type: Number },
     seekerConfirmed: { type: Boolean, default: false },
     providerConfirmed: { type: Boolean, default: false },
     negotiationHistory: [

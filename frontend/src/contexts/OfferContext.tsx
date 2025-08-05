@@ -25,10 +25,9 @@ export interface Offer {
 
 export interface NegotiationTerms {
   price?: number;
-  date?: string;
-  time?: string;
   materials?: string;
   scope?: string;
+  selectedScheduleIndex?: number;
 }
 
 export interface NegotiationHistoryEntry {
@@ -109,10 +108,9 @@ export const OfferProvider: React.FC<OfferProviderProps> = ({ children }) => {
         [offerId]: {
           currentTerms: {
             price: n.price,
-            date: n.date,
-            time: n.time,
             materials: n.materials,
-            scope: n.scope
+            scope: n.scope,
+            selectedScheduleIndex: n.selectedScheduleIndex
           },
           confirmationStatus: {
             seeker: !!n.seekerConfirmed,

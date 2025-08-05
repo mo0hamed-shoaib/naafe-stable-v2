@@ -489,19 +489,29 @@ class OfferService {
       throw new Error('Can only update negotiation for pending, negotiating, or agreement_reached offers');
     }
     const negotiation = offer.negotiation || {};
-    const fields = ['price', 'date', 'time', 'materials', 'scope'];
+    const fields = ['price', 'materials', 'scope', 'selectedScheduleIndex'];
     let changes = [];
     let confirmationsWereSet = negotiation.seekerConfirmed && negotiation.providerConfirmed;
     fields.forEach(field => {
       if (updateData[field] !== undefined && updateData[field] !== negotiation[field]) {
+        let newValue = updateData[field];
+        
+        // Convert selectedScheduleIndex to number if it's a string
+        if (field === 'selectedScheduleIndex' && typeof newValue === 'string') {
+          newValue = parseInt(newValue);
+          if (isNaN(newValue)) {
+            throw new Error('Selected schedule index must be a valid number');
+          }
+        }
+        
         changes.push({
           field,
           oldValue: negotiation[field],
-          newValue: updateData[field],
+          newValue: newValue,
           changedBy: userId,
           timestamp: new Date()
         });
-        negotiation[field] = updateData[field];
+        negotiation[field] = newValue;
       }
     });
     if (changes.length === 0) throw new Error('No changes to negotiation terms');
@@ -555,11 +565,23 @@ class OfferService {
       }
       
       const negotiation = offer.negotiation;
-      const requiredFields = ['price', 'date', 'time', 'materials', 'scope'];
+      const requiredFields = ['price', 'materials', 'scope', 'selectedScheduleIndex'];
       
       // Check for required fields
       for (const field of requiredFields) {
-        if (!negotiation[field]) throw new Error(`Negotiation field '${field}' must be set before confirmation`);
+        if (field === 'selectedScheduleIndex') {
+          // selectedScheduleIndex can be 0, so check for undefined/null specifically
+          if (negotiation[field] === undefined || negotiation[field] === null) {
+            logger.error(`Missing required field '${field}' in negotiation for offer ${offerId}. Current negotiation:`, negotiation);
+            throw new Error(`Negotiation field '${field}' must be set before confirmation`);
+          }
+        } else {
+          // For other fields, check if they exist and are not empty
+          if (!negotiation[field]) {
+            logger.error(`Missing required field '${field}' in negotiation for offer ${offerId}. Current negotiation:`, negotiation);
+            throw new Error(`Negotiation field '${field}' must be set before confirmation`);
+          }
+        }
       }
       
       // Update confirmation status based on user role

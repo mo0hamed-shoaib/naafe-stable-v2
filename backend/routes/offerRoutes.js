@@ -5,6 +5,7 @@ import { authenticateToken, requireRole } from '../middlewares/auth.middleware.j
 import { 
   updateOfferValidation, 
   offerIdValidation, 
+  updateNegotiationValidation,
   handleValidationErrors 
 } from '../validation/offerValidation.js';
 
@@ -121,6 +122,7 @@ router.patch('/:offerId/negotiation',
   authenticateToken,
   requireRole(['provider', 'seeker']),
   offerIdValidation,
+  updateNegotiationValidation,
   handleValidationErrors,
   offerController.updateNegotiationTerms
 );
