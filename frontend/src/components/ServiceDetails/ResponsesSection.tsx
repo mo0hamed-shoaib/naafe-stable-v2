@@ -59,6 +59,13 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
   jobRequestId,
   seekerId
 }) => {
+  // Helper function to convert 24-hour time to 12-hour format with Arabic AM/PM
+  const formatTimeTo12Hour = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours < 12 ? 'ص' : 'م';
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
   const { user, accessToken } = useAuth();
   const { negotiationState, fetchNegotiation, confirmNegotiation, resetNegotiation } = useOfferContext();
   const navigate = useNavigate();
@@ -380,9 +387,9 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                   
                   <div className="space-y-3">
                     {resp.selectedScheduleItems.slice(0, 6).map((item, index) => {
-                      const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                      const getTimeSlotLabel = (timeSlot: string, customTimeRange?: { startTime: string; endTime: string }) => {
                         if (timeSlot === 'custom' && customTimeRange) {
-                          return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                          return `${formatTimeTo12Hour(customTimeRange.startTime)} - ${formatTimeTo12Hour(customTimeRange.endTime)}`;
                         }
                         switch (timeSlot) {
                           case 'morning': return 'صباحاً (8:00 ص - 12:00 م)';
@@ -462,7 +469,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                   negotiation={negotiation}
                   isProvider={user.id === resp.providerId}
                   isSeeker={user.id === resp.jobRequestSeekerId}
-                  jobRequest={{ id: resp.jobRequestId || '', title: '', description: '', budget: { min: 0, max: 0, currency: '' }, location: '', postedBy: { id: '', name: '', isPremium: false }, createdAt: '', preferredDate: '', status: 'open', category: '', availability: { days: [], timeSlots: [] } }}
+                  jobRequest={{ id: resp.jobRequestId || '', title: '', description: '', budget: { min: 0, max: 0, currency: '' }, location: '', postedBy: { id: '', name: '', isPremium: false }, createdAt: '', timePosted: '', preferredDate: '', status: 'open', category: '', availability: { days: [], timeSlots: [] } }}
                   offer={resp}
                   onConfirm={() => confirmNegotiation(resp.id)}
                   onReset={() => resetNegotiation(resp.id)}
@@ -571,7 +578,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                   negotiation={negotiation}
                   isProvider={user.id === resp.providerId}
                   isSeeker={user.id === resp.jobRequestSeekerId}
-                  jobRequest={{ id: resp.jobRequestId || '', title: '', description: '', budget: { min: 0, max: 0, currency: '' }, location: '', postedBy: { id: '', name: '', isPremium: false }, createdAt: '', preferredDate: '', status: 'open', category: '', availability: { days: [], timeSlots: [] } }}
+                  jobRequest={{ id: resp.jobRequestId || '', title: '', description: '', budget: { min: 0, max: 0, currency: '' }, location: '', postedBy: { id: '', name: '', isPremium: false }, createdAt: '', timePosted: '', preferredDate: '', status: 'open', category: '', availability: { days: [], timeSlots: [] } }}
                   offer={resp}
                   paymentCompleted={resp.status === 'in_progress'}
                   serviceCompleted={resp.status === 'completed'}
