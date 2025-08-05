@@ -21,7 +21,6 @@ interface Response {
   isTopRated?: boolean;
   isPremium?: boolean;
   message?: string;
-  estimatedTimeDays?: number;
   selectedScheduleItems?: Array<{
     date: string;
     timeSlot: string;
@@ -99,8 +98,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
     price: resp.price,
     specialties: resp.specialties || [],
     message: resp.message || '',
-    estimatedTimeDays: resp.estimatedTimeDays || 1,
-    selectedScheduleItems: resp.selectedScheduleItems || [],
+            selectedScheduleItems: resp.selectedScheduleItems || [],
     status: resp.status || 'pending',
     providerId: resp.providerId || '',
     jobRequestSeekerId: seekerId, // Always set from prop
@@ -345,11 +343,7 @@ const ResponsesSection: React.FC<ResponsesSectionProps> = ({
                     <div className="text-2xl font-bold text-deep-teal">
                       {resp.price.toLocaleString('ar-EG')} جنيه
                     </div>
-                    {resp.estimatedTimeDays && (
-                      <div className="text-xs text-deep-teal/70 mt-1">
-                        المدة المتوقعة: {resp.estimatedTimeDays} يوم
-                      </div>
-                    )}
+
                   </div>
                 </div>
               )}

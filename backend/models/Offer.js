@@ -34,11 +34,7 @@ const offerSchema = new mongoose.Schema({
     maxlength: 1000,
     trim: true
   },
-  estimatedTimeDays: {
-    type: Number,
-    default: 1,
-    min: [1, 'Estimated time must be at least 1 day']
-  },
+
   // Schedule-based availability
   selectedScheduleItems: [{
     date: {

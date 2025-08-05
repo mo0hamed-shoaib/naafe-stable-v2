@@ -55,7 +55,7 @@ router.get('/:offerId',
  * @param   {string} offerId - ID of the offer to update
  * @body    {object} [price] - Updated price object with amount and currency
  * @body    {string} [message] - Updated message from provider
- * @body    {number} [estimatedTimeDays] - Updated estimated completion time
+
  * @returns {object} Updated offer with populated details
  */
 router.patch('/:offerId', 

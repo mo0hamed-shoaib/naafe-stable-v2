@@ -18,10 +18,6 @@ const createOfferValidation = [
     .optional()
     .isLength({ max: 1000 })
     .withMessage('Message cannot exceed 1000 characters'),
-  body('estimatedTimeDays')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Estimated time must be at least 1 day'),
   body('selectedScheduleItems')
     .optional()
     .isArray()
@@ -62,10 +58,6 @@ const updateOfferValidation = [
     .optional()
     .isLength({ max: 1000 })
     .withMessage('Message cannot exceed 1000 characters'),
-  body('estimatedTimeDays')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Estimated time must be at least 1 day'),
   body('selectedScheduleItems')
     .optional()
     .isArray()

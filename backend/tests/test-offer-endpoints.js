@@ -40,7 +40,7 @@ const testOffer = {
     currency: 'EGP'
   },
   message: 'I can complete this job efficiently and on time',
-  estimatedTimeDays: 3
+  
 };
 
 // Helper function to log responses
@@ -167,7 +167,7 @@ const testUpdateOffer = async () => {
         currency: 'EGP'
       },
       message: 'Updated offer message with better terms',
-      estimatedTimeDays: 2
+  
     };
     
     const response = await axios.patch(`${BASE_URL}/offer/${offerId}`, updateData, {
@@ -203,7 +203,7 @@ const testRejectOffer = async () => {
         currency: 'EGP'
       },
       message: 'Another offer to test rejection',
-      estimatedTimeDays: 5
+  
     };
     
     const createResponse = await axios.post(`${BASE_URL}/offer/requests/${jobRequestId}`, anotherOffer, {
@@ -232,7 +232,7 @@ const testValidationErrors = async () => {
         currency: 'EGP'
       },
       message: 'Invalid offer',
-      estimatedTimeDays: 0
+  
     };
     
     const response = await axios.post(`${BASE_URL}/offer/requests/${jobRequestId}`, invalidOffer, {
@@ -251,7 +251,7 @@ const testValidationErrors = async () => {
         currency: 'EGP'
       },
       message: 'Out of budget offer',
-      estimatedTimeDays: 1
+  
     };
     
     const response = await axios.post(`${BASE_URL}/offer/requests/${jobRequestId}`, outOfBudgetOffer, {

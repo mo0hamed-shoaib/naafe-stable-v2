@@ -2,29 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfferContext } from '../contexts/OfferContext';
-import { X, Star, Shield, Calendar, Clock } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import Button from './ui/Button';
-import BaseCard from './ui/BaseCard';
-import Badge from './ui/Badge';
 
-import { FormInput, FormTextarea, BudgetIndicator, NegotiationToggle, BudgetExplanationTextarea, ScheduleModal } from "./ui";
-import UnifiedSelect from "./ui/UnifiedSelect";
+import { FormTextarea, ScheduleModal } from "./ui";
 import Header from './Header';
 import Footer from './Footer';
 import useSchedule from '../hooks/useSchedule';
 
 interface FormData {
-  timeline: string;
-  duration: string;
   message: string;
-  selectedScheduleItems: Array<{
-    date: string;
-    timeSlot: string;
-    customTimeRange?: {
-      startTime: string;
-      endTime: string;
-    };
-  }>;
+  selectedScheduleItems: ScheduleItem[];
   agreedToTerms: boolean;
   negotiationAcknowledged: boolean;
   budgetExplanation: string;
@@ -42,6 +30,15 @@ interface ProviderData {
   };
 }
 
+interface ScheduleItem {
+  date: string;
+  timeSlot: string;
+  customTimeRange?: {
+    startTime: string;
+    endTime: string;
+  };
+}
+
 interface Offer {
   id: string;
   name: string;
@@ -50,15 +47,7 @@ interface Offer {
   specialties: string[];
   verified?: boolean;
   message?: string;
-  estimatedTimeDays?: number;
-  selectedScheduleItems?: Array<{
-    date: string;
-    timeSlot: string;
-    customTimeRange?: {
-      startTime: string;
-      endTime: string;
-    };
-  }>;
+  selectedScheduleItems?: ScheduleItem[];
   createdAt?: string;
 }
 
@@ -69,8 +58,6 @@ const ServiceResponseForm: React.FC = () => {
   const { addNewOffer } = useOfferContext();
   
   const [formData, setFormData] = useState<FormData>({
-    timeline: '',
-    duration: '',
     message: '',
     selectedScheduleItems: [],
     agreedToTerms: false,
@@ -87,6 +74,14 @@ const ServiceResponseForm: React.FC = () => {
   
   // Get provider's schedule
   const { schedule, loading: scheduleLoading, error: scheduleError } = useSchedule(user?.id);
+
+  // Helper function to convert 24-hour time to 12-hour format with Arabic AM/PM
+  const formatTimeTo12Hour = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours < 12 ? 'ص' : 'م';
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,7 +112,7 @@ const ServiceResponseForm: React.FC = () => {
     if (jobRequestId) fetchData();
   }, [jobRequestId, accessToken]);
 
-  const handleScheduleItemSelect = (scheduleItem: any) => {
+  const handleScheduleItemSelect = (scheduleItem: ScheduleItem) => {
     setFormData(prev => {
       const isAlreadySelected = prev.selectedScheduleItems.some(
         item => item.date === scheduleItem.date && item.timeSlot === scheduleItem.timeSlot
@@ -160,7 +155,6 @@ const ServiceResponseForm: React.FC = () => {
     try {
       const offerData = {
         message: formData.message,
-        estimatedTimeDays: Number(formData.duration) || 1,
         selectedScheduleItems: formData.selectedScheduleItems
       };
 
@@ -185,7 +179,6 @@ const ServiceResponseForm: React.FC = () => {
         specialties: [], // TODO: Get from provider profile
         verified: providerData?.providerProfile?.verification?.status === 'verified',
         message: formData.message,
-        estimatedTimeDays: parseInt(formData.duration) || 1,
         selectedScheduleItems: formData.selectedScheduleItems,
         createdAt: new Date().toISOString(),
       };
@@ -204,16 +197,7 @@ const ServiceResponseForm: React.FC = () => {
 
 
 
-  const getTimelineDisplay = () => {
-    switch (formData.timeline) {
-      case 'today': return 'اليوم';
-      case 'tomorrow': return 'غداً';
-      case 'this-week': return 'هذا الأسبوع';
-      case 'next-week': return 'الأسبوع القادم';
-      case 'flexible': return 'مرن';
-      default: return 'غير محدد';
-    }
-  };
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
@@ -332,47 +316,7 @@ const ServiceResponseForm: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Your Offer Section */}
               <div>
-                <h2 className="text-lg font-semibold text-deep-teal mb-4 pb-2 border-b border-gray-200">
-                  عرضك
-                </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="timeline" className="text-sm font-medium text-text-primary mb-2 block">
-                    متى يمكنك البدء؟
-                  </label>
-                  <UnifiedSelect
-                    value={formData.timeline} 
-                    onChange={val => setFormData(prev => ({ ...prev, timeline: val }))}
-                    options={[
-                      { value: '', label: 'اختر التوقيت' },
-                      { value: 'today', label: 'اليوم' },
-                      { value: 'tomorrow', label: 'غداً' },
-                      { value: 'this-week', label: 'هذا الأسبوع' },
-                      { value: 'next-week', label: 'الأسبوع القادم' },
-                      { value: 'flexible', label: 'مرن' },
-                    ]}
-                    required
-                    className="w-full"
-                    aria-label="اختر التوقيت"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="duration" className="text-sm font-medium text-text-primary mb-2 block">
-                    المدة المتوقعة (أيام)
-                  </label>
-                  <FormInput
-                    id="duration"
-                    type="number"
-                    placeholder="مثال: 2 يوم"
-                    value={formData.duration}
-                    onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-deep-teal focus:border-deep-teal bg-white text-text-primary placeholder-gray-500"
-                    min="1"
-                    required
-                  />
-                </div>
-              </div>
+
             </div>
 
             {/* Schedule Selection Section */}
@@ -420,9 +364,9 @@ const ServiceResponseForm: React.FC = () => {
                           selected => selected.date === item.date && selected.timeSlot === item.timeSlot
                         );
                         
-                        const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                        const getTimeSlotLabel = (timeSlot: string, customTimeRange?: { startTime: string; endTime: string }) => {
                           if (timeSlot === 'custom' && customTimeRange) {
-                            return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                            return `${formatTimeTo12Hour(customTimeRange.startTime)} - ${formatTimeTo12Hour(customTimeRange.endTime)}`;
                           }
                           switch (timeSlot) {
                             case 'morning': return 'صباحاً (8:00 ص - 12:00 م)';
@@ -490,15 +434,15 @@ const ServiceResponseForm: React.FC = () => {
                       </div>
                       <div className="space-y-2">
                         {formData.selectedScheduleItems.map((item, index) => {
-                          const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                          const getTimeSlotLabel = (timeSlot: string, customTimeRange?: { startTime: string; endTime: string }) => {
                             if (timeSlot === 'custom' && customTimeRange) {
-                              return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                              return `${formatTimeTo12Hour(customTimeRange.startTime)} - ${formatTimeTo12Hour(customTimeRange.endTime)}`;
                             }
                             switch (timeSlot) {
-                              case 'morning': return 'صباحاً';
-                              case 'afternoon': return 'ظهراً';
-                              case 'evening': return 'مساءً';
-                              case 'full_day': return 'يوم كامل';
+                              case 'morning': return 'صباحاً (8:00 ص - 12:00 م)';
+                              case 'afternoon': return 'ظهراً (12:00 م - 4:00 م)';
+                              case 'evening': return 'مساءً (4:00 م - 8:00 م)';
+                              case 'full_day': return 'يوم كامل (8:00 ص - 8:00 م)';
                               default: return timeSlot;
                             }
                           };
@@ -600,113 +544,7 @@ const ServiceResponseForm: React.FC = () => {
           </form>
           </div>
 
-          {/* Live Preview Section */}
-          <BaseCard className="mt-8 bg-[#FDF8F0] p-8">
-          <h2 className="text-lg font-semibold text-deep-teal mb-6">معاينة مباشرة</h2>
-          
-          <BaseCard className="bg-white shadow-lg">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <img
-                  src={providerData?.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face&auto=format"}
-                  alt="صورة المزود"
-                  className="h-16 w-16 rounded-full object-cover"
-                />
-                <div className="mr-4">
-                  <h3 className="font-bold text-text-primary">
-                    {providerData ? `${providerData.name.first} ${providerData.name.last}` : 'اسمك'}
-                  </h3>
-                  <div className="flex items-center mt-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    <span className="text-sm text-text-secondary mr-1">
-                      {providerData?.providerProfile?.rating || 0} ({providerData?.providerProfile?.reviewCount || 0} تقييم)
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-text-secondary">تاريخ البدء</p>
-                  <p className="text-text-primary">{getTimelineDisplay()}</p>
-                </div>
 
-                {formData.selectedScheduleItems.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-text-secondary">الأوقات المختارة ({formData.selectedScheduleItems.length})</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {formData.selectedScheduleItems.slice(0, 5).map((item, index) => {
-                        const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
-                          if (timeSlot === 'custom' && customTimeRange) {
-                            return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
-                          }
-                          switch (timeSlot) {
-                            case 'morning': return 'صباحاً';
-                            case 'afternoon': return 'ظهراً';
-                            case 'evening': return 'مساءً';
-                            case 'full_day': return 'يوم كامل';
-                            default: return timeSlot;
-                          }
-                        };
-
-                        return (
-                          <Badge key={index} variant="category" className="text-xs">
-                            {new Date(item.date).toLocaleDateString('ar-EG', { 
-                              weekday: 'short',
-                              month: 'short', 
-                              day: 'numeric' 
-                            })} - {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
-                          </Badge>
-                        );
-                      })}
-                      {formData.selectedScheduleItems.length > 5 && (
-                        <Badge variant="category" className="text-xs">
-                          +{formData.selectedScheduleItems.length - 5} أكثر
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                <div>
-                  <p className="text-sm font-semibold text-text-secondary">مقتطف من الرسالة</p>
-                  <p className="text-text-primary text-sm italic line-clamp-3">
-                    {formData.message || "أخبرهم لماذا أنت الشخص المناسب لهذا العمل..."}
-                  </p>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm font-semibold text-text-secondary mb-2">
-                    المهارات والتحقق
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {providerData?.providerProfile?.verification?.status === 'verified' && (
-                      <Badge variant="top-rated">
-                        <Shield className="h-3 w-3 ml-1" />
-                        موثق
-                      </Badge>
-                    )}
-                    <Badge variant="category">التصوير</Badge>
-                    <Badge variant="category">التحرير</Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </BaseCard>
-
-          {/* Tips Section */}
-          <BaseCard className="mt-6 bg-light-cream border-r-4 border-deep-teal">
-            <div className="p-4">
-              <p className="font-bold text-deep-teal mb-2">نصيحة لرد أفضل</p>
-              <ul className="list-disc list-inside text-sm text-text-secondary space-y-1">
-                <li>أضف رسالة شخصية</li>
-                <li>اذكر خبرتك في هذا المجال</li>
-                <li>ارفع أمثلة من أعمالك</li>
-                <li>حدد تواريخ متاحة واضحة</li>
-              </ul>
-            </div>
-          </BaseCard>
-          </BaseCard>
         </div>
       </main>
       

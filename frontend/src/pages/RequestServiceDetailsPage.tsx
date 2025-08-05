@@ -34,9 +34,14 @@ interface BackendOffer {
     currency: string;
   };
   message?: string;
-  estimatedTimeDays?: number;
-  availableDates?: string[];
-  timePreferences?: string[];
+  selectedScheduleItems?: Array<{
+    date: string;
+    timeSlot: string;
+    customTimeRange?: {
+      startTime: string;
+      endTime: string;
+    };
+  }>;
   createdAt?: string;
   status?: string;
 }
@@ -83,10 +88,8 @@ const RequestServiceDetailsPage = () => {
             price: offer.budget?.min || 0,
             specialties: offer.provider?.providerProfile?.skills || [],
             verified: offer.provider?.isVerified || false,
-            message: offer.message || '',
-            estimatedTimeDays: offer.estimatedTimeDays || 1,
-            availableDates: offer.availableDates || [],
-            timePreferences: offer.timePreferences || [],
+                    message: offer.message || '',
+        selectedScheduleItems: offer.selectedScheduleItems || [],
             createdAt: offer.createdAt,
             status: offer.status || 'pending',
             providerId: offer.provider?._id || offer.provider,

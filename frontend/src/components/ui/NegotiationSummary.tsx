@@ -185,10 +185,31 @@ const NegotiationSummary: React.FC<NegotiationSummaryProps> = ({
                 <div>
                   <p className="font-medium text-gray-700">التواريخ المتاحة</p>
                   <p className="text-text-secondary overflow-hidden text-ellipsis">
-                    {(offer?.availableDates ?? []).length > 0 
-                      ? (offer.availableDates ?? []).map((d: string, i: number, arr: string[]) => 
-                        <span key={i}>{dayjs(d).format('YYYY-MM-DD')}{i < arr.length - 1 ? '، ' : ''}</span>) 
+                    {(offer?.selectedScheduleItems ?? []).length > 0 
+                      ? (offer.selectedScheduleItems ?? []).slice(0, 3).map((item: any, i: number, arr: any[]) => {
+                          const getTimeSlotLabel = (timeSlot: string, customTimeRange?: any) => {
+                            if (timeSlot === 'custom' && customTimeRange) {
+                              return `${customTimeRange.startTime} - ${customTimeRange.endTime}`;
+                            }
+                            switch (timeSlot) {
+                              case 'morning': return 'صباحاً';
+                              case 'afternoon': return 'ظهراً';
+                              case 'evening': return 'مساءً';
+                              case 'full_day': return 'يوم كامل';
+                              default: return timeSlot;
+                            }
+                          };
+                          return (
+                            <span key={i}>
+                              {dayjs(item.date).format('MM/DD')} - {getTimeSlotLabel(item.timeSlot, item.customTimeRange)}
+                              {i < arr.length - 1 ? '، ' : ''}
+                            </span>
+                          );
+                        })
                       : 'غير محدد'}
+                    {(offer?.selectedScheduleItems ?? []).length > 3 && (
+                      <span> +{(offer.selectedScheduleItems ?? []).length - 3} أكثر</span>
+                    )}
                   </p>
                 </div>
               </div>

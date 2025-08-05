@@ -73,7 +73,7 @@ router.delete('/:id',
  * @param   {string} id - ID of the job request
  * @body    {object} price - Price object with amount and currency
  * @body    {string} [message] - Optional message from provider
- * @body    {number} [estimatedTimeDays] - Estimated completion time in days
+
  * @returns {object} Created offer with populated provider and job request details
  */
 router.post('/:id/offers', 

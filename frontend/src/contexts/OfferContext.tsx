@@ -11,9 +11,14 @@ export interface Offer {
   specialties: string[];
   verified?: boolean;
   message?: string;
-  estimatedTimeDays?: number;
-  availableDates?: string[];
-  timePreferences?: string[];
+  selectedScheduleItems?: Array<{
+    date: string;
+    timeSlot: string;
+    customTimeRange?: {
+      startTime: string;
+      endTime: string;
+    };
+  }>;
   createdAt?: string;
   status?: string; // 'pending', 'negotiating', 'accepted', 'in_progress', 'completed', 'rejected'
 }

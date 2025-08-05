@@ -181,10 +181,8 @@ const ChatPage: React.FC = () => {
               price: backendOffer.budget?.min || 0,
               specialties: backendOffer.provider?.providerProfile?.skills || [],
               verified: backendOffer.provider?.isVerified || false,
-              message: backendOffer.message || '',
-              estimatedTimeDays: backendOffer.estimatedTimeDays || 1,
-              availableDates: backendOffer.availableDates || [],
-              timePreferences: backendOffer.timePreferences || [],
+                      message: backendOffer.message || '',
+        selectedScheduleItems: backendOffer.selectedScheduleItems || [],
               createdAt: backendOffer.createdAt,
             };
             addNewOffer(mappedOffer);
