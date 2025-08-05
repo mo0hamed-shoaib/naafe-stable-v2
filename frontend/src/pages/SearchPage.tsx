@@ -22,7 +22,7 @@ const fetchListings = async (filters: FilterState) => {
   
 
   
-  const res = await fetch(`/api/listings/listings?${params.toString()}`);
+  const res = await fetch(`/api/listings?${params.toString()}`);
   const json = await res.json();
   if (!json.success) throw new Error(json.error?.message || 'فشل تحميل الخدمات');
   return json.data.listings || json.data.items || [];

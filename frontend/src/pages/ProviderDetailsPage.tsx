@@ -358,27 +358,7 @@ const ProviderDetailsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Skills */}
-                  {provider.providerProfile?.skills && provider.providerProfile.skills.length > 0 && (
-                    <div className="mb-4">
-                      <h3 className="font-semibold text-text-primary mb-2">المهارات:</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {provider.providerProfile.skills.slice(0, 8).map((skill, index) => (
-                          <span
-                            key={index}
-                            className="bg-soft-teal/20 text-deep-teal px-3 py-1 rounded-full text-sm"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                        {provider.providerProfile.skills.length > 8 && (
-                          <span className="bg-gray-100 text-text-secondary px-3 py-1 rounded-full text-sm">
-                            +{provider.providerProfile.skills.length - 8} أخرى
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>

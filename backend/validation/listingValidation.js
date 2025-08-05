@@ -17,12 +17,7 @@ export const validateCreateListing = [
     .optional().isIn(['EGP', 'USD', 'EUR']).withMessage('Invalid currency'),
   body('status')
     .optional().isIn(['active', 'paused', 'archived']).withMessage('Invalid status'),
-  body('workingDays')
-    .isArray({ min: 1 }).withMessage('At least one working day must be selected'),
-  body('startTime')
-    .isString().withMessage('Start time is required'),
-  body('endTime')
-    .isString().withMessage('End time is required'),
+
   body('location.government')
     .isString().withMessage('Government is required'),
   body('location.city')
@@ -51,12 +46,7 @@ export const validateUpdateListing = [
     .optional().isIn(['EGP', 'USD', 'EUR']).withMessage('Invalid currency'),
   body('status')
     .optional().isIn(['active', 'paused', 'archived']).withMessage('Invalid status'),
-  body('workingDays')
-    .optional().isArray({ min: 1 }).withMessage('At least one working day must be selected'),
-  body('startTime')
-    .optional().isString().withMessage('Start time is required'),
-  body('endTime')
-    .optional().isString().withMessage('End time is required'),
+
   body('location.government')
     .optional().isString().withMessage('Government is required'),
   body('location.city')

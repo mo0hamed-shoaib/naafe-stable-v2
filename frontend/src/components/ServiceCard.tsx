@@ -56,10 +56,7 @@ const ServiceCard = ({ provider, onViewDetails, featured }: ServiceCardProps) =>
       ${provider.isTopRated ? 'ring-2 ring-teal-300' : ''}
     `}>
 
-      {/* Category Badge - Top Left Absolute */}
-      <span className="absolute left-4 top-4 z-20 text-base font-bold bg-soft-teal/30 text-deep-teal px-4 py-1 rounded-lg whitespace-nowrap" style={{ fontSize: '1.1rem' }}>
-        {translateCategory(provider.category)}
-      </span>
+
       {/* Premium Background Effect */}
       {(provider.isPremium || featured) && (
         <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-orange-400/10 pointer-events-none"></div>
@@ -106,6 +103,12 @@ const ServiceCard = ({ provider, onViewDetails, featured }: ServiceCardProps) =>
               <div className="text-xs text-text-secondary mt-1">{memberSinceText}</div>
             )}
           </div>
+        </div>
+        {/* Category Badge */}
+        <div className="mb-2">
+          <span className="inline-block text-base font-bold bg-soft-teal/30 text-deep-teal px-3 py-1 rounded-lg" style={{ fontSize: '1rem' }}>
+            {translateCategory(provider.category)}
+          </span>
         </div>
         {/* Service Title */}
         {provider.title && (

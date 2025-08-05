@@ -52,9 +52,7 @@ const serviceListingSchema = new Schema({
     government: String,
     city: String
   },
-  workingDays: [String],
-  startTime: String,
-  endTime: String,
+
   status: {
     type: String,
     enum: ['active', 'paused', 'archived'],

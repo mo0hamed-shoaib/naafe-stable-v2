@@ -7,8 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FormInput, FormTextarea } from './ui';
 import UnifiedSelect from './ui/UnifiedSelect';
-import { AIAssistant } from './ui';
-import { PricingGuidance } from './ui';
+
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { EGYPT_GOVERNORATES, EGYPT_CITIES } from '../utils/constants';
 import { DatePicker, ConfigProvider } from 'antd';
@@ -362,26 +361,7 @@ const RequestServiceForm: React.FC = () => {
     }
   };
 
-  // Add this handler to map AI fields to form fields
-  const handleAISuggestion = (field: string, value: string) => {
-    if (field === 'title') {
-      setFormData(prev => ({ ...prev, requestTitle: value }));
-    } else if (field === 'description') {
-      // Ensure AI suggestions don't exceed 2000 characters
-      const truncatedValue = value.length > 2000 ? value.substring(0, 2000) : value;
-      setFormData(prev => ({ ...prev, requestDescription: truncatedValue }));
-    } else if (field === 'keywords') {
-      setFormData(prev => ({ ...prev, tags: value }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
-  };
 
-  // Add this handler for pricing guidance
-  const handlePricingApply = (min: number, max: number) => {
-    // Pricing guidance is no longer applicable since budget fields are removed
-    console.log('Pricing guidance received:', { min, max });
-  };
 
   const handleAutofillAddress = () => {
     if (!profileAddress) return;
@@ -414,31 +394,7 @@ const RequestServiceForm: React.FC = () => {
     <div className="min-h-screen bg-[#F5E6D3] flex flex-col font-cairo" dir="rtl">
       <Header />
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* AI Form Section */}
-          <div>
-            <BaseCard className="p-6 md:sticky md:top-24">
-              <h2 className="text-xl font-bold text-deep-teal mb-4 flex items-center gap-2">
-                <span className="text-[#F5A623]">✨</span>
-                أدوات الذكاء الاصطناعي
-              </h2>
-              <AIAssistant
-                formType="request"
-                category={formData.category}
-                currentFields={formData as unknown as Record<string, unknown>}
-                onSuggestionApply={handleAISuggestion}
-                className="mb-4"
-              />
-              <PricingGuidance
-                formType="request"
-                category={formData.category}
-                location={formData.government}
-                userBudget={null}
-                onPricingApply={handlePricingApply}
-              />
-            </BaseCard>
-          </div>
-
+        <div className="w-full max-w-6xl">
           {/* Main Form Section */}
           <div>
             <BaseCard className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-gray-200">
