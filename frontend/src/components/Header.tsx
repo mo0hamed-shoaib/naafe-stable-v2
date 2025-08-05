@@ -230,7 +230,6 @@ const Header = ({ onSearch, searchValue = '' }: HeaderProps) => {
   const navigationItems = [
     { label: 'الخدمات', href: '/categories' },
     ...(isProvider ? [{ label: 'للإشتراك', href: '/pricing' }] : []),
-    { label: 'أعلن معنا', href: '/advertise' },
     { label: 'استكشف', href: '/search' },
   ];
 

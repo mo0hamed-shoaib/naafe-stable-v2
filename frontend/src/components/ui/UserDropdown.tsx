@@ -92,13 +92,6 @@ const UserDropdown = ({ user, onLogout, className = '' }: UserDropdownProps) => 
       href: '/transactions',
       onClick: () => setIsOpen(false)
     },
-    // Ad Management menu item
-    {
-      icon: Megaphone,
-      label: 'إدارة الإعلانات',
-      href: '/ads',
-      onClick: () => setIsOpen(false)
-    },
     {
       icon: LogOut,
       label: 'تسجيل الخروج',
