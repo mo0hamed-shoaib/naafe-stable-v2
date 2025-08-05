@@ -8,7 +8,7 @@ interface CategoryCardProps {
 }
 
 const CategoryCard = ({ category, onClick }: CategoryCardProps) => {
-  const { name, description, serviceCount, startingPrice, icon, numServices, avgServicePrice, numRequests, avgRequestPrice } = category;
+  const { name, description, icon } = category;
 
   return (
     <BaseCard
@@ -57,42 +57,7 @@ const CategoryCard = ({ category, onClick }: CategoryCardProps) => {
           </p>
         )}
         
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
-          {typeof numServices === 'number' && (
-            <div className="text-center">
-              <p className="text-lg font-bold text-deep-teal">{numServices}</p>
-              <p className="text-xs text-text-secondary">خدمة</p>
-            </div>
-          )}
-          {typeof avgServicePrice === 'number' && (
-            <div className="text-center">
-              <p className="text-lg font-bold text-accent">{avgServicePrice.toFixed(0)}</p>
-              <p className="text-xs text-text-secondary">جنيه</p>
-            </div>
-          )}
-          {typeof numRequests === 'number' && (
-            <div className="text-center">
-              <p className="text-lg font-bold text-deep-teal">{numRequests}</p>
-              <p className="text-xs text-text-secondary">طلب</p>
-            </div>
-          )}
-          {typeof avgRequestPrice === 'number' && (
-            <div className="text-center">
-              <p className="text-lg font-bold text-accent">{avgRequestPrice.toFixed(0)}</p>
-              <p className="text-xs text-text-secondary">جنيه</p>
-            </div>
-          )}
-        </div>
-        
-        {/* Starting Price */}
-        {startingPrice && (
-          <div className="pt-2 border-t border-gray-200">
-            <p className="text-sm text-text-secondary text-center">
-              يبدأ من <span className="font-bold text-accent">{startingPrice} جنيه</span>
-            </p>
-          </div>
-        )}
+
       </div>
     </BaseCard>
   );
