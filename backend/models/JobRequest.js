@@ -35,22 +35,19 @@ const jobRequestSchema = new Schema({
   budget: {
     min: {
       type: Number,
-      required: true,
+      required: false,
       min: [0, 'Minimum budget cannot be negative']
     },
     max: {
       type: Number,
-      required: true,
+      required: false,
       min: [0, 'Maximum budget cannot be negative']
     }
   },
   location: {
     address: String,
     government: String,
-    city: String,
-    street: String,
-    apartmentNumber: String,
-    additionalInformation: String
+    city: String
   },
   attachments: [{
     url: {
@@ -88,7 +85,8 @@ const jobRequestSchema = new Schema({
   },
   estimatedDuration: {
     type: Number, // in days
-    min: 1
+    min: 1,
+    required: false
   },
   completionProof: {
     images: [String],
@@ -106,9 +104,9 @@ jobRequestSchema.index({ seeker: 1, status: 1 });
 jobRequestSchema.index({ category: 1, status: 1 });
 jobRequestSchema.index({ deadline: 1 });
 
-// Validation for budget
+// Validation for budget - only if budget is provided
 jobRequestSchema.pre('save', function(next) {
-  if (this.budget.min > this.budget.max) {
+  if (this.budget && this.budget.min && this.budget.max && this.budget.min > this.budget.max) {
     return next(new Error('Minimum budget cannot be greater than maximum budget'));
   }
   next();

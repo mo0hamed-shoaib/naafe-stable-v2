@@ -61,17 +61,12 @@ async function testJobRequestEndpoints() {
         title: 'Need a website for my business',
         description: 'I need a professional website for my small business. Looking for a responsive design with modern UI.',
         category: 'Web Development',
-        budget: {
-          min: 1000,
-          max: 5000
-        },
         location: {
-          type: 'Point',
-          coordinates: [31.2357, 30.0444], // Cairo coordinates
-          address: 'Cairo, Egypt'
+          government: 'القاهرة',
+          city: 'المعادي',
+          address: 'القاهرة, المعادي'
         },
-        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        estimatedDuration: 14
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
       };
 
       const createdJobRequest = await jobRequestService.createJobRequest(jobRequestData, seeker._id);
@@ -121,10 +116,10 @@ async function testJobRequestEndpoints() {
       console.error('❌ getJobRequestsBySeeker failed:', error.message);
     }
 
-    // Test validation - invalid budget
+    // Test validation - invalid budget (optional now)
     try {
       const invalidJobRequestData = {
-        title: 'Invalid job request',
+        title: 'Invalid job request with budget',
         description: 'This should fail due to invalid budget',
         category: 'Web Development',
         budget: {
@@ -132,9 +127,9 @@ async function testJobRequestEndpoints() {
           max: 1000 // Invalid: min > max
         },
         location: {
-          type: 'Point',
-          coordinates: [31.2357, 30.0444],
-          address: 'Cairo, Egypt'
+          government: 'القاهرة',
+          city: 'المعادي',
+          address: 'القاهرة, المعادي'
         },
         deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       };
@@ -151,14 +146,11 @@ async function testJobRequestEndpoints() {
         title: 'Past deadline job',
         description: 'This should fail due to past deadline',
         category: 'Web Development',
-        budget: {
-          min: 1000,
-          max: 3000
-        },
-        location: {
-          type: 'Point',
-          coordinates: [31.2357, 30.0444],
-          address: 'Cairo, Egypt'
+                location: {
+          government: 'القاهرة',
+          city: 'المعادي',
+          address: 'القاهرة, المعادي'
+        }
         },
         deadline: new Date(Date.now() - 24 * 60 * 60 * 1000) // Yesterday
       };

@@ -99,39 +99,7 @@ const ServiceSidebar: React.FC<ServiceSidebarProps> = ({
         </div>
       </div>
 
-      {/* Summary Section */}
-      <div className="mb-6">
-        <h3 className="font-bold text-lg mb-4 text-deep-teal">ملخص الطلب</h3>
-        <div className="space-y-3">
-          {/* Budget */}
-          <div className="flex items-center gap-3 p-3 bg-warm-cream rounded-lg">
-            <DollarSign className="h-5 w-5 text-deep-teal flex-shrink-0" />
-            <div>
-              <div className="text-sm text-deep-teal/70">الميزانية</div>
-              <div className="font-semibold text-deep-teal">
-                {budget.min?.toLocaleString('ar-EG')} - {budget.max?.toLocaleString('ar-EG')} جنيه
-              </div>
-            </div>
-          </div>
 
-          {/* Deadline */}
-          {deadline && (
-            <div className="flex items-center gap-3 p-3 bg-warm-cream rounded-lg">
-              <Calendar className="h-5 w-5 text-deep-teal flex-shrink-0" />
-              <div>
-                <div className="text-sm text-deep-teal/70">الموعد النهائي</div>
-                <div className="font-semibold text-deep-teal">
-                  {new Date(deadline).toLocaleDateString('ar-EG', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Action Buttons */}
       <div className="space-y-3">

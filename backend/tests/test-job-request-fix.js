@@ -85,17 +85,12 @@ async function testJobRequestCreation() {
         title: 'Test Job Request',
         description: 'This is a test job request to verify the fix',
         category: 'Test Category',
-        budget: {
-          min: 100,
-          max: 500
-        },
         location: {
-          type: 'Point',
-          coordinates: [31.2357, 30.0444], // Cairo coordinates
-          address: 'Cairo, Egypt'
+          government: 'القاهرة',
+          city: 'المعادي',
+          address: 'القاهرة, المعادي'
         },
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-        estimatedDuration: 3
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
       })
     });
 

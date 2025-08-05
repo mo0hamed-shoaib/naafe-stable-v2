@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 import Button from './Button';
 import { FilterState } from '../../types';
-import { EGYPT_GOVERNORATES, EGYPT_CITIES, PRICE_RANGES } from '../../utils/constants.ts';
+import { EGYPT_GOVERNORATES, EGYPT_CITIES } from '../../utils/constants.ts';
 import { SearchTab } from './SearchTabs';
 import { FormInput } from './';
 import UnifiedSelect from './UnifiedSelect';
@@ -158,25 +158,7 @@ const FilterForm = ({
             />
           </div>
 
-          {/* Price Range Filter */}
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-3">
-              حدود السعر
-            </label>
-            <UnifiedSelect
-              value={filters.priceRange}
-              onChange={val => handleInputChange('priceRange', val)}
-              options={[
-                { value: '', label: 'جميع الأسعار' },
-                ...Object.entries(PRICE_RANGES).map(([key, range]) => ({
-                  value: key,
-                  label: range.label
-                }))
-              ]}
-              placeholder="اختر حدود السعر"
-              size="md"
-            />
-          </div>
+
 
           {/* Rating Filter - Only for Services */}
           {activeTab === 'services' && (
@@ -284,19 +266,7 @@ const FilterForm = ({
             disabled={!filters.location}
           />
           
-          <UnifiedSelect
-            value={filters.priceRange}
-            onChange={val => handleInputChange('priceRange', val)}
-            options={[
-              { value: '', label: 'جميع الأسعار' },
-              ...Object.entries(PRICE_RANGES).map(([key, range]) => ({
-                value: key,
-                label: range.label
-              }))
-            ]}
-            placeholder="حدود السعر"
-            size="md"
-          />
+
           
           <div className="flex items-center justify-between gap-2">
             <UnifiedSelect

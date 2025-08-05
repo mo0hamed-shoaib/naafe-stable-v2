@@ -164,13 +164,7 @@ const ServiceRequestCard = ({ request, alreadyApplied, onInterested, onViewDetai
         </div>
 
         {/* Stats Row - Fixed Height */}
-        <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-          <div className="bg-gray-50 rounded-lg p-2">
-            <div className="text-sm font-bold text-green-600">
-              {request.budget?.min || 0} - {request.budget?.max || 0}
-            </div>
-            <div className="text-xs text-text-secondary">جنيه</div>
-          </div>
+        <div className="grid grid-cols-2 gap-2 mb-4 text-center">
           <div className="bg-gray-50 rounded-lg p-2">
             <div className="text-sm font-bold text-blue-600">
               {request.responses || 0}

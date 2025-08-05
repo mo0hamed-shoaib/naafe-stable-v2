@@ -25,7 +25,7 @@ interface HireRequest {
   title: string;
   description: string;
   category: string;
-  budget: {
+  budget?: {
     min: number;
     max: number;
     currency: string;
@@ -38,8 +38,8 @@ interface HireRequest {
     additionalInformation?: string;
   };
   preferredDateTime: string;
-  deliveryTimeDays: number;
-  tags: string[];
+  deliveryTimeDays?: number;
+  tags?: string[];
   images: string[];
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
   createdAt: string;
@@ -279,13 +279,16 @@ const ProviderHireRequestsPage: React.FC = () => {
                         {getStatusBadge(request.status)}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-green-600" />
-                          <span>
-                            {request.budget.min.toLocaleString()} - {request.budget.max.toLocaleString()} جنيه
-                          </span>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                        {/* Budget - Only show if available */}
+                        {request.budget && (request.budget.min || request.budget.max) && (
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <span>
+                              {request.budget.min.toLocaleString()} - {request.budget.max.toLocaleString()} جنيه
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-red-600" />
                           <span>{request.location.government}, {request.location.city}</span>
@@ -293,10 +296,6 @@ const ProviderHireRequestsPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-blue-600" />
                           <span>{formatDateTime(request.preferredDateTime)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-orange-600" />
-                          <span>{request.deliveryTimeDays} أيام</span>
                         </div>
                       </div>
 

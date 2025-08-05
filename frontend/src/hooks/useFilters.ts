@@ -4,7 +4,6 @@ import { FilterState } from '../types';
 const initialFilters: FilterState = {
   search: '',
   location: '',
-  priceRange: '',
   rating: '',
 };
 

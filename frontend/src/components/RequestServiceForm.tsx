@@ -20,39 +20,24 @@ interface RequestServiceFormData {
   requestTitle: string;
   category: string;
   requestDescription: string;
-  minBudget: string;
-  maxBudget: string;
   government: string;
   city: string;
-  street: string;
-  apartmentNumber: string;
-  additionalInformation: string;
   preferredDateTime: string;
-  deliveryTimeDays: string;
-  tags: string;
   images: string[]; // Array of image URLs
 }
 
 interface AddressFields {
   government: string;
   city: string;
-  street: string;
-  apartmentNumber: string;
-  additionalInformation: string;
 }
 
 interface ValidationErrors {
   requestTitle?: string;
   category?: string;
   requestDescription?: string;
-  minBudget?: string;
-  maxBudget?: string;
   government?: string;
   city?: string;
-  street?: string;
-  apartmentNumber?: string;
   preferredDateTime?: string;
-  deliveryTimeDays?: string;
 }
 
 const RequestServiceForm: React.FC = () => {
@@ -61,16 +46,9 @@ const RequestServiceForm: React.FC = () => {
     requestTitle: '',
     category: '',
     requestDescription: '',
-    minBudget: '',
-    maxBudget: '',
     government: '',
     city: '',
-    street: '',
-    apartmentNumber: '',
-    additionalInformation: '',
     preferredDateTime: '',
-    deliveryTimeDays: '',
-    tags: '',
     images: [],
   });
   const [loading, setLoading] = useState(false);
@@ -122,23 +100,6 @@ const RequestServiceForm: React.FC = () => {
       errors.requestDescription = 'وصف الطلب لا يمكن أن يتجاوز 2000 حرف';
     }
 
-    // Budget validation
-    if (!formData.minBudget.trim()) {
-      errors.minBudget = 'الميزانية الأدنى مطلوبة';
-    } else if (Number(formData.minBudget) < 0) {
-      errors.minBudget = 'الميزانية الأدنى يجب أن تكون رقم موجب';
-    }
-
-    if (!formData.maxBudget.trim()) {
-      errors.maxBudget = 'الميزانية الأقصى مطلوبة';
-    } else if (Number(formData.maxBudget) < 0) {
-      errors.maxBudget = 'الميزانية الأقصى يجب أن تكون رقم موجب';
-    }
-
-    if (formData.minBudget && formData.maxBudget && Number(formData.minBudget) > Number(formData.maxBudget)) {
-      errors.maxBudget = 'الميزانية الأقصى يجب أن تكون أكبر من الميزانية الأدنى';
-    }
-
     // Location validation
     if (!formData.government.trim()) {
       errors.government = 'المحافظة مطلوبة';
@@ -148,25 +109,9 @@ const RequestServiceForm: React.FC = () => {
       errors.city = 'المدينة مطلوبة';
     }
 
-    // Address validation
-    if (!formData.street.trim()) {
-      errors.street = 'الشارع مطلوب';
-    }
-
-    if (!formData.apartmentNumber.trim()) {
-      errors.apartmentNumber = 'رقم الشقة مطلوب';
-    }
-
     // Date validation
     if (!formData.preferredDateTime.trim()) {
       errors.preferredDateTime = 'التاريخ المفضل مطلوب';
-    }
-
-    // Delivery time validation
-    if (!formData.deliveryTimeDays.trim()) {
-      errors.deliveryTimeDays = 'مدة التسليم مطلوبة';
-    } else if (Number(formData.deliveryTimeDays) < 1) {
-      errors.deliveryTimeDays = 'مدة التسليم يجب أن تكون يوم واحد على الأقل';
     }
 
     setValidationErrors(errors);
@@ -208,23 +153,7 @@ const RequestServiceForm: React.FC = () => {
           errors.requestDescription = 'وصف الطلب لا يمكن أن يتجاوز 2000 حرف';
         }
         break;
-      case 'minBudget':
-        if (!formData.minBudget.trim()) {
-          errors.minBudget = 'الميزانية الأدنى مطلوبة';
-        } else if (Number(formData.minBudget) < 0) {
-          errors.minBudget = 'الميزانية الأدنى يجب أن تكون رقم موجب';
-        }
-        break;
-      case 'maxBudget':
-        if (!formData.maxBudget.trim()) {
-          errors.maxBudget = 'الميزانية الأقصى مطلوبة';
-        } else if (Number(formData.maxBudget) < 0) {
-          errors.maxBudget = 'الميزانية الأقصى يجب أن تكون رقم موجب';
-        }
-        if (formData.minBudget && formData.maxBudget && Number(formData.minBudget) > Number(formData.maxBudget)) {
-          errors.maxBudget = 'الميزانية الأقصى يجب أن تكون أكبر من الميزانية الأدنى';
-        }
-        break;
+
       case 'government':
         if (!formData.government.trim()) {
           errors.government = 'المحافظة مطلوبة';
@@ -235,28 +164,13 @@ const RequestServiceForm: React.FC = () => {
           errors.city = 'المدينة مطلوبة';
         }
         break;
-      case 'street':
-        if (!formData.street.trim()) {
-          errors.street = 'الشارع مطلوب';
-        }
-        break;
-      case 'apartmentNumber':
-        if (!formData.apartmentNumber.trim()) {
-          errors.apartmentNumber = 'رقم الشقة مطلوب';
-        }
-        break;
+
       case 'preferredDateTime':
         if (!formData.preferredDateTime.trim()) {
           errors.preferredDateTime = 'التاريخ المفضل مطلوب';
         }
         break;
-      case 'deliveryTimeDays':
-        if (!formData.deliveryTimeDays.trim()) {
-          errors.deliveryTimeDays = 'مدة التسليم مطلوبة';
-        } else if (Number(formData.deliveryTimeDays) < 1) {
-          errors.deliveryTimeDays = 'مدة التسليم يجب أن تكون يوم واحد على الأقل';
-        }
-        break;
+
     }
     
     // Update only the specific field error
@@ -275,14 +189,9 @@ const RequestServiceForm: React.FC = () => {
       formData.requestTitle.trim() &&
       formData.category.trim() &&
       formData.requestDescription.trim() &&
-      formData.minBudget.trim() &&
-      formData.maxBudget.trim() &&
       formData.government.trim() &&
       formData.city.trim() &&
-      formData.street.trim() &&
-      formData.apartmentNumber.trim() &&
-      formData.preferredDateTime.trim() &&
-      formData.deliveryTimeDays.trim();
+      formData.preferredDateTime.trim();
 
     // Check if there are no validation errors (only count actual error messages)
     const hasNoErrors = Object.values(validationErrors).every(error => !error);
@@ -403,14 +312,9 @@ const RequestServiceForm: React.FC = () => {
       requestTitle: true,
       category: true,
       requestDescription: true,
-      minBudget: true,
-      maxBudget: true,
       government: true,
       city: true,
-      street: true,
-      apartmentNumber: true,
       preferredDateTime: true,
-      deliveryTimeDays: true,
     });
     
     if (!validateForm()) {
@@ -424,22 +328,12 @@ const RequestServiceForm: React.FC = () => {
         title: formData.requestTitle,
         description: formData.requestDescription,
         category: formData.category,
-        budget: {
-          min: Number(formData.minBudget),
-          max: Number(formData.maxBudget),
-          currency: 'EGP',
-        },
         location: {
           government: formData.government,
           city: formData.city,
-          street: formData.street,
-          apartmentNumber: formData.apartmentNumber,
-          address: `${formData.government}, ${formData.city}, ${formData.street}, ${formData.apartmentNumber}`,
-          additionalInformation: formData.additionalInformation,
+          address: `${formData.government}, ${formData.city}`,
         },
         deadline: formData.preferredDateTime ? new Date(formData.preferredDateTime) : undefined,
-        deliveryTimeDays: Number(formData.deliveryTimeDays),
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         attachments: formData.images.map(url => ({
           url,
           filename: url.split('/').pop() || 'image.jpg',
@@ -485,11 +379,8 @@ const RequestServiceForm: React.FC = () => {
 
   // Add this handler for pricing guidance
   const handlePricingApply = (min: number, max: number) => {
-    setFormData(prev => ({
-      ...prev,
-      minBudget: min.toString(),
-      maxBudget: max.toString()
-    }));
+    // Pricing guidance is no longer applicable since budget fields are removed
+    console.log('Pricing guidance received:', { min, max });
   };
 
   const handleAutofillAddress = () => {
@@ -498,9 +389,6 @@ const RequestServiceForm: React.FC = () => {
       ...prev,
       government: profileAddress.government || '',
       city: profileAddress.city || '',
-      street: profileAddress.street || '',
-      apartmentNumber: profileAddress.apartmentNumber || '',
-      additionalInformation: profileAddress.additionalInformation || '',
     }));
     // Set dropdowns for UnifiedSelect
     const govId = EGYPT_GOVERNORATES.find(g => g.name === profileAddress.government)?.id || '';
@@ -545,10 +433,7 @@ const RequestServiceForm: React.FC = () => {
                 formType="request"
                 category={formData.category}
                 location={formData.government}
-                userBudget={formData.minBudget && formData.maxBudget ? {
-                  min: Number(formData.minBudget),
-                  max: Number(formData.maxBudget)
-                } : null}
+                userBudget={null}
                 onPricingApply={handlePricingApply}
               />
             </BaseCard>
@@ -613,42 +498,7 @@ const RequestServiceForm: React.FC = () => {
                   />
                   {shouldShowError('requestDescription') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.requestDescription}</p>}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="minBudget">الحد الأدنى للميزانية (جنيه)</label>
-                    <FormInput
-                      type="number"
-                      id="minBudget"
-                      name="minBudget"
-                      value={formData.minBudget}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="مثال: 50"
-                      min="0"
-                      required
-                      size="md"
-                      className={shouldShowError('minBudget') ? 'border-red-500' : ''}
-                    />
-                    {shouldShowError('minBudget') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.minBudget}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="maxBudget">الحد الأقصى للميزانية (جنيه)</label>
-                    <FormInput
-                      type="number"
-                      id="maxBudget"
-                      name="maxBudget"
-                      value={formData.maxBudget}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="مثال: 200"
-                      min="0"
-                      required
-                      size="md"
-                      className={shouldShowError('maxBudget') ? 'border-red-500' : ''}
-                    />
-                    {shouldShowError('maxBudget') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.maxBudget}</p>}
-                  </div>
-                </div>
+
                 {profileAddress && (
                   <div className="mb-4 flex items-center gap-4">
                     <button
@@ -719,50 +569,7 @@ const RequestServiceForm: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="street">الشارع</label>
-                    <FormInput
-                      type="text"
-                      id="street"
-                      name="street"
-                      value={formData.street}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="مثال: شارع التحرير، شارع محمد فريد"
-                      required
-                      size="md"
-                      className={shouldShowError('street') ? 'border-red-500' : ''}
-                    />
-                    {shouldShowError('street') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.street}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="apartmentNumber">رقم الشقة</label>
-                    <FormInput
-                      type="text"
-                      id="apartmentNumber"
-                      name="apartmentNumber"
-                      value={formData.apartmentNumber}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="مثال: شقة 12، الدور 3"
-                      size="md"
-                      className={shouldShowError('apartmentNumber') ? 'border-red-500' : ''}
-                    />
-                    {shouldShowError('apartmentNumber') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.apartmentNumber}</p>}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="additionalInformation">معلومات إضافية</label>
-                                      <FormTextarea
-                      id="additionalInformation"
-                      name="additionalInformation"
-                      value={formData.additionalInformation}
-                      onChange={handleChange}
-                      placeholder="أي تفاصيل إضافية..."
-                      size="md"
-                    />
-                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="preferredDateTime">التاريخ والوقت المفضل</label>
                   <ConfigProvider locale={arEG}>
@@ -791,37 +598,7 @@ const RequestServiceForm: React.FC = () => {
                     {shouldShowError('preferredDateTime') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.preferredDateTime}</p>}
                   </ConfigProvider>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="deliveryTimeDays">مدة التنفيذ (أيام)</label>
-                    <FormInput
-                      type="number"
-                      id="deliveryTimeDays"
-                      name="deliveryTimeDays"
-                      value={formData.deliveryTimeDays}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="مثال: 3"
-                      min="1"
-                      required
-                      size="md"
-                      className={shouldShowError('deliveryTimeDays') ? 'border-red-500' : ''}
-                    />
-                    {shouldShowError('deliveryTimeDays') && <p className="text-red-600 text-sm text-right mt-1">{validationErrors.deliveryTimeDays}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0e1b18] text-right mb-2" htmlFor="tags">العلامات (اختياري)</label>
-                    <FormInput
-                      type="text"
-                      id="tags"
-                      name="tags"
-                      value={formData.tags}
-                      onChange={handleChange}
-                      placeholder="مثال: تنظيف، منزل، عاجل"
-                      size="md"
-                    />
-                  </div>
-                </div>
+
 
                 {/* Image Upload Section */}
                 <div>

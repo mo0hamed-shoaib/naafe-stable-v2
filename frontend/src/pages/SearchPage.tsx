@@ -22,22 +22,7 @@ const fetchListings = async (filters: FilterState) => {
   if (filters.location) params.set('location', filters.location);
   if (filters.city) params.set('city', filters.city);
   
-  // Convert priceRange to minPrice and maxPrice
-  if (filters.priceRange) {
-    const priceRanges = {
-      'VERY_LOW': { min: 0, max: 100 },
-      'LOW': { min: 100, max: 300 },
-      'MEDIUM': { min: 300, max: 500 },
-      'HIGH': { min: 500, max: 1000 },
-      'VERY_HIGH': { min: 1000, max: null }
-    };
-    
-    const range = priceRanges[filters.priceRange as keyof typeof priceRanges];
-    if (range) {
-      if (range.min !== null) params.set('minPrice', range.min.toString());
-      if (range.max !== null) params.set('maxPrice', range.max.toString());
-    }
-  }
+
   
   const res = await fetch(`/api/listings/listings?${params.toString()}`);
   const json = await res.json();
@@ -52,22 +37,7 @@ const fetchRequests = async (filters: FilterState) => {
   if (filters.location) params.set('location', filters.location);
   if (filters.city) params.set('city', filters.city);
   
-  // Convert priceRange to minPrice and maxPrice for requests
-  if (filters.priceRange) {
-    const priceRanges = {
-      'VERY_LOW': { min: 0, max: 100 },
-      'LOW': { min: 100, max: 300 },
-      'MEDIUM': { min: 300, max: 500 },
-      'HIGH': { min: 500, max: 1000 },
-      'VERY_HIGH': { min: 1000, max: null }
-    };
-    
-    const range = priceRanges[filters.priceRange as keyof typeof priceRanges];
-    if (range) {
-      if (range.min !== null) params.set('minBudget', range.min.toString());
-      if (range.max !== null) params.set('maxBudget', range.max.toString());
-    }
-  }
+
   
   const res = await fetch(`/api/requests?${params.toString()}`);
   const json = await res.json();
@@ -107,11 +77,11 @@ const SearchPage = () => {
   const [filters, setFilters] = useState<FilterState>(getFiltersFromUrl());
   
   const { data: listings = [], isLoading: listingsLoading, error: listingsError } = useQuery({
-    queryKey: ['listings', filters.search, filters.category, filters.premiumOnly, filters.location, filters.priceRange, filters.rating],
+    queryKey: ['listings', filters.search, filters.category, filters.premiumOnly, filters.location, filters.rating],
     queryFn: () => fetchListings(filters),
   });
   const { data: requests = [], isLoading: requestsLoading, error: requestsError } = useQuery({
-    queryKey: ['requests', filters.search, filters.category, filters.location, filters.city, filters.priceRange],
+    queryKey: ['requests', filters.search, filters.category, filters.location, filters.city],
     queryFn: () => fetchRequests(filters),
   });
   const [providerOfferRequestIds, setProviderOfferRequestIds] = useState<string[]>([]);

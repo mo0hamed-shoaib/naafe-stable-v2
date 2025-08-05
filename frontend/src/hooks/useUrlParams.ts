@@ -55,7 +55,6 @@ export const useUrlParams = () => {
       search: getParam('query') || getParam('search') || '',
       location: getParam('location') || '',
       city: getParam('city') || '',
-      priceRange: getParam('priceRange') || '',
       rating: getParam('rating') || '',
       category: getParam('category') || '',
       premiumOnly: getParam('premiumOnly') === 'true'
@@ -68,7 +67,6 @@ export const useUrlParams = () => {
     if (filters.search) params.query = filters.search;
     if (filters.location) params.location = filters.location;
     if (filters.city) params.city = filters.city;
-    if (filters.priceRange) params.priceRange = filters.priceRange;
     if (filters.rating) params.rating = filters.rating;
     if (filters.category) params.category = filters.category;
     if (filters.premiumOnly) params.premiumOnly = 'true';

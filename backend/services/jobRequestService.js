@@ -39,10 +39,12 @@ class JobRequestService {
 
       console.log(`[JobRequestService] Category validation passed: ${jobRequestData.category}`);
 
-      // Validate budget
-      if (jobRequestData.budget.min > jobRequestData.budget.max) {
-        console.error(`[JobRequestService] Invalid budget range: min=${jobRequestData.budget.min}, max=${jobRequestData.budget.max}`);
-        throw new Error('Minimum budget cannot be greater than maximum budget');
+      // Validate budget - only if provided
+      if (jobRequestData.budget && jobRequestData.budget.min && jobRequestData.budget.max) {
+        if (jobRequestData.budget.min > jobRequestData.budget.max) {
+          console.error(`[JobRequestService] Invalid budget range: min=${jobRequestData.budget.min}, max=${jobRequestData.budget.max}`);
+          throw new Error('Minimum budget cannot be greater than maximum budget');
+        }
       }
 
       // Validate deadline is in the future
@@ -118,12 +120,24 @@ class JobRequestService {
         console.log(`[JobRequestService] Filtering by city: ${city}`);
       }
 
-      // Budget filters
+      // Budget filters - only apply if budget exists
       if (minBudget !== undefined) {
-        query['budget.max'] = { $gte: minBudget };
+        query.$and = query.$and || [];
+        query.$and.push({
+          $or: [
+            { 'budget.max': { $gte: minBudget } },
+            { budget: { $exists: false } }
+          ]
+        });
       }
       if (maxBudget !== undefined) {
-        query['budget.min'] = { $lte: maxBudget };
+        query.$and = query.$and || [];
+        query.$and.push({
+          $or: [
+            { 'budget.min': { $lte: maxBudget } },
+            { budget: { $exists: false } }
+          ]
+        });
       }
 
       // Search filter
@@ -593,10 +607,22 @@ class JobRequestService {
       query.requiredSkills = { $in: provider.providerProfile.skills };
     }
     if (filters.minBudget) {
-      query['budget.max'] = { $gte: filters.minBudget };
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { 'budget.max': { $gte: filters.minBudget } },
+          { budget: { $exists: false } }
+        ]
+      });
     }
     if (filters.maxBudget) {
-      query['budget.min'] = { $lte: filters.maxBudget };
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { 'budget.min': { $lte: filters.maxBudget } },
+          { budget: { $exists: false } }
+        ]
+      });
     }
     if (filters.location) {
       query['location.government'] = filters.location.government;

@@ -159,23 +159,25 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({ service }) => {
           </div>
         </div>
 
-        {/* Budget */}
-        <div className="flex items-center gap-3 p-3 bg-warm-cream rounded-lg">
-          <DollarSign className="h-5 w-5 text-deep-teal flex-shrink-0" />
-          <div>
-            <div className="text-sm text-deep-teal/70">الميزانية</div>
-            <div className="font-semibold text-deep-teal">
-              {budget.min ? budget.min.toLocaleString('ar-EG') : 'غير محدد'} - {budget.max ? budget.max.toLocaleString('ar-EG') : 'غير محدد'} جنيه
+        {/* Budget - Only show if available */}
+        {budget && (budget.min || budget.max) && (
+          <div className="flex items-center gap-3 p-3 bg-warm-cream rounded-lg">
+            <DollarSign className="h-5 w-5 text-deep-teal flex-shrink-0" />
+            <div>
+              <div className="text-sm text-deep-teal/70">الميزانية</div>
+              <div className="font-semibold text-deep-teal">
+                {budget.min ? budget.min.toLocaleString('ar-EG') : 'غير محدد'} - {budget.max ? budget.max.toLocaleString('ar-EG') : 'غير محدد'} جنيه
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Timeline */}
         {safeTimeline && (
           <div className="flex items-center gap-3 p-3 bg-warm-cream rounded-lg">
             <Clock className="h-5 w-5 text-deep-teal flex-shrink-0" />
             <div>
-              <div className="text-sm text-deep-teal/70">المدة المتوقعة</div>
+              <div className="text-sm text-deep-teal/70">تاريخ بداية الخدمة</div>
               <div className="font-semibold text-deep-teal">{safeTimeline}</div>
             </div>
           </div>
@@ -188,11 +190,8 @@ const ServiceDetails: React.FC<ServiceDetailsProps> = ({ service }) => {
             <div>
               <div className="text-sm text-deep-teal/70">الموقع</div>
               <div className="font-semibold text-deep-teal">
-                {location.city || ''} {location.government || ''}
+                {location.government || ''} {location.city ? `، ${location.city}` : ''}
               </div>
-              {location.address && (
-                <div className="text-sm text-deep-teal/70">{location.address}</div>
-              )}
             </div>
           </div>
         )}

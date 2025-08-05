@@ -41,16 +41,19 @@ export const validateCreateJobRequest = [
     .trim(),
   
   body('budget.min')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Minimum budget must be a positive number'),
   
   body('budget.max')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Maximum budget must be a positive number'),
   
   body('budget')
+    .optional()
     .custom((value) => {
-      if (value.min > value.max) {
+      if (value && value.min && value.max && value.min > value.max) {
         throw new Error('Minimum budget cannot be greater than maximum budget');
       }
       return true;
@@ -75,6 +78,18 @@ export const validateCreateJobRequest = [
     .optional()
     .isLength({ max: 200 })
     .withMessage('Address cannot exceed 200 characters')
+    .trim(),
+  
+  body('location.government')
+    .optional()
+    .isString()
+    .withMessage('Government must be a string')
+    .trim(),
+  
+  body('location.city')
+    .optional()
+    .isString()
+    .withMessage('City must be a string')
     .trim(),
   
   body('deadline')
@@ -146,7 +161,7 @@ export const validateUpdateJobRequest = [
   body('budget')
     .optional()
     .custom((value) => {
-      if (value.min > value.max) {
+      if (value && value.min && value.max && value.min > value.max) {
         throw new Error('Minimum budget cannot be greater than maximum budget');
       }
       return true;
@@ -171,6 +186,18 @@ export const validateUpdateJobRequest = [
     .optional()
     .isLength({ max: 200 })
     .withMessage('Address cannot exceed 200 characters')
+    .trim(),
+  
+  body('location.government')
+    .optional()
+    .isString()
+    .withMessage('Government must be a string')
+    .trim(),
+  
+  body('location.city')
+    .optional()
+    .isString()
+    .withMessage('City must be a string')
     .trim(),
   
   body('status')

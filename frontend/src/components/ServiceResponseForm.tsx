@@ -145,28 +145,31 @@ const ServiceResponseForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Budget validation
+    // Budget validation - only if budget is available
     const priceValue = Number(formData.price);
-    const minBudget = jobRequest?.budget?.min || 0;
-    const maxBudget = jobRequest?.budget?.max || 0;
+    const minBudget = jobRequest?.budget?.min;
+    const maxBudget = jobRequest?.budget?.max;
     
-    // Calculate thresholds for edge cases
-    const tooLowThreshold = minBudget * 0.5; // 50% of min budget
-    const tooHighThreshold = maxBudget * 2; // 200% of max budget
-    
-    const isOverBudget = priceValue > maxBudget;
-    const isTooLow = priceValue < tooLowThreshold;
-    const isTooHigh = priceValue > tooHighThreshold;
-    
-    if ((isOverBudget || isTooLow || isTooHigh) && !formData.negotiationAcknowledged) {
-      if (isTooLow) {
-        setError('يجب عليك الموافقة على المتابعة بهذا السعر المنخفض جداً');
-      } else if (isTooHigh) {
-        setError('يجب عليك الموافقة على المتابعة بهذا السعر المرتفع جداً');
-      } else {
-        setError('يجب عليك الموافقة على أن سعرك يتطلب تفاوض للمتابعة');
+    // Only validate against budget if it's available
+    if (minBudget !== undefined && maxBudget !== undefined) {
+      // Calculate thresholds for edge cases
+      const tooLowThreshold = minBudget * 0.5; // 50% of min budget
+      const tooHighThreshold = maxBudget * 2; // 200% of max budget
+      
+      const isOverBudget = priceValue > maxBudget;
+      const isTooLow = priceValue < tooLowThreshold;
+      const isTooHigh = priceValue > tooHighThreshold;
+      
+      if ((isOverBudget || isTooLow || isTooHigh) && !formData.negotiationAcknowledged) {
+        if (isTooLow) {
+          setError('يجب عليك الموافقة على المتابعة بهذا السعر المنخفض جداً');
+        } else if (isTooHigh) {
+          setError('يجب عليك الموافقة على المتابعة بهذا السعر المرتفع جداً');
+        } else {
+          setError('يجب عليك الموافقة على أن سعرك يتطلب تفاوض للمتابعة');
+        }
+        return;
       }
-      return;
     }
     
     setIsSubmitting(true);

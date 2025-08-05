@@ -45,7 +45,7 @@ export interface ServiceRequest {
   id: string;
   title: string;
   description: string;
-  budget: {
+  budget?: {
     min: number;
     max: number;
     currency: string;
@@ -77,7 +77,6 @@ export interface FilterState {
   search: string;
   location: string;
   city: string;
-  priceRange: string;
   rating: string;
   category?: string;
   tab?: 'services' | 'requests';
