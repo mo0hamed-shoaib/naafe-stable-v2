@@ -4,7 +4,6 @@ import PageLayout from './layout/PageLayout';
 import CategoryCard from './CategoryCard';
 import { useAuth } from '../contexts/AuthContext';
 import { ComponentType } from 'react';
-import AdPlacement from './ui/AdPlacement';
 import React from 'react';
 
 interface Category {
@@ -80,10 +79,6 @@ const ServiceCategoriesPage = () => {
       user={user}
       onLogout={logout}
     >
-      {/* Top Banner Ad */}
-      <div className="mb-6">
-        <AdPlacement location="categories" type="top" />
-      </div>
 
       <div className="mb-8">
         <div className="text-center mb-8">
@@ -127,12 +122,7 @@ const ServiceCategoriesPage = () => {
                   category={category}
                   onClick={() => handleCategoryClick(category)}
                 />
-                {/* Interstitial Ad every 4 categories */}
-                {(index + 1) % 4 === 0 && index < categories.length - 1 && (
-                  <div className="col-span-full my-6">
-                    <AdPlacement location="categories" type="interstitial" />
-                  </div>
-                )}
+
               </React.Fragment>
             ))}
           </>
@@ -143,11 +133,6 @@ const ServiceCategoriesPage = () => {
             </div>
           </div>
         )}
-      </div>
-      
-      {/* Bottom Banner Ad */}
-      <div className="mt-8">
-        <AdPlacement location="categories" type="bottom" />
       </div>
     </PageLayout>
   );

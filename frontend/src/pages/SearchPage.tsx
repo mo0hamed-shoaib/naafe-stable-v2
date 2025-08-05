@@ -11,7 +11,6 @@ import { FilterState } from '../types';
 import { useUrlParams } from '../hooks/useUrlParams';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, Users, FileText, ArrowLeft, CheckCircle } from 'lucide-react';
-import AdPlacement from '../components/ui/AdPlacement';
 import FeaturedProviders from '../components/FeaturedProviders';
 
 const fetchListings = async (filters: FilterState) => {
@@ -466,10 +465,6 @@ const SearchPage = () => {
         </div>
         
         <div className="w-full lg:w-3/4">
-          {/* Top Banner Ad */}
-          <div className="mb-6">
-            <AdPlacement location="search" type="top" />
-          </div>
           
           {/* Featured Providers Section - Only show for providers search */}
           {searchType === 'providers' && (
@@ -495,12 +490,7 @@ const SearchPage = () => {
                         onViewDetails={() => handleViewProviderDetails(provider.providerId || provider.id)}
                         featured={provider.featured}
                       />
-                      {/* Interstitial Ad every 6 providers */}
-                      {(index + 1) % 6 === 0 && index < providersWithFeatured.length - 1 && (
-                        <div className="col-span-full my-6">
-                          <AdPlacement location="search" type="interstitial" />
-                        </div>
-                      )}
+
                     </React.Fragment>
                   ))}
                 </div>
@@ -524,12 +514,7 @@ const SearchPage = () => {
                         onViewDetails={handleViewRequestDetails}
                         alreadyApplied={providerOfferRequestIds.includes(request.id)}
                       />
-                      {/* Interstitial Ad every 6 requests */}
-                      {(index + 1) % 6 === 0 && index < mappedRequests.length - 1 && (
-                        <div className="col-span-full my-6">
-                          <AdPlacement location="search" type="interstitial" />
-                        </div>
-                      )}
+
                     </React.Fragment>
                   ))}
                 </div>
@@ -538,10 +523,6 @@ const SearchPage = () => {
               renderEmptyState()
             )
           )}
-          {/* Bottom Banner Ad */}
-          <div className="mt-8">
-            <AdPlacement location="search" type="bottom" />
-          </div>
         </div>
       </div>
     </PageLayout>
